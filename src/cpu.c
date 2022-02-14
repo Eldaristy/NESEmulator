@@ -1,6 +1,6 @@
-#include "../include/cpu.h"
+	#include "../include/cpu.h"
 
-opcode instruction_set[0x100] = {
+opcode opcode_table[0x100] = {
 	{BRK,IMP}, {ORA,XND}, {XXX,XXX}, {XXX,XXX}, {XXX,XXX}, {ORA,ZPG}, {ASL,ZPG}, {XXX,XXX}, {PHP,IMP}, {ORA,IMM}, {ASL,ACC}, {XXX,XXX}, {XXX,XXX}, {ORA,ABS}, {ASL,ABS}, {XXX,XXX},
 	{BPL,REL}, {ORA,INY}, {XXX,XXX}, {XXX,XXX}, {XXX,XXX}, {ORA,ZPX}, {ASL,ZPX}, {XXX,XXX}, {CLC,IMP}, {ORA,ABY}, {XXX,XXX}, {XXX,XXX}, {XXX,XXX}, {ORA,ABX}, {ASL,ABX}, {XXX,XXX},
 	{JSR,ABS}, {AND,XND}, {XXX,XXX}, {XXX,XXX}, {BIT,ZPG}, {AND,ZPG}, {ROL,ZPG}, {XXX,XXX}, {PLP,IMP}, {AND,IMM}, {ROL,ACC}, {XXX,XXX}, {BIT,ABS}, {AND,ABS}, {ROL,ABS}, {XXX,XXX},
@@ -19,33 +19,61 @@ opcode instruction_set[0x100] = {
 	{BEQ,REL}, {SBC,INY}, {XXX,XXX}, {XXX,XXX}, {XXX,XXX}, {SBC,ZPG}, {INC,ZPG}, {XXX,XXX}, {SED,IMP}, {SBC,ABY}, {XXX,XXX}, {XXX,XXX}, {XXX,XXX}, {SBC,ABX}, {INC,ABX}, {XXX,XXX}
 };
 
+uint8_t run_clock()
+{
+	effective_addr = 0;
+	fetched_opcode = 0;
+	fetched_data = 0;
+
+	while(1) {
+		fetched_opcode = cpu_bus_rd(context.pc);
+		opcode_table[fetched_opcode].addressing_mode();
+	}
+}
+//The addressing methods return the data read from the register, NULL if there isn't any register
 uint8_t ACC()
 {
-	return 0;
+	return context.a;
 }
 uint8_t ABS()
 {
-	return 0;
+	effective_addr = cpu_bus_rd(context.pc + 1); //low byte read from lower address
+	effective_addr += cpu_bus_rd(context.pc + 2) << 8; //high byte read from higher address
+	fetched_data = cpu_bus_rd(effective_addr);
+	return NULL;
 }
 uint8_t ABX()
 {
-	return 0;
+	effective_addr = cpu_bus_rd(context.pc + 1); //low byte read from lower address
+	effective_addr += cpu_bus_rd(context.pc + 2) << 8; //high byte read from higher address
+	effective_addr += context.x;
+	fetched_data = cpu_bus_rd(effective_addr);
+	return NULL;
 }
 uint8_t ABY()
 {
-	return 0;
+	effective_addr = cpu_bus_rd(context.pc + 1); //low byte read from lower address
+	effective_addr += cpu_bus_rd(context.pc + 2) << 8; //high byte read from higher address
+	effective_addr += context.y;
+	fetched_data = cpu_bus_rd(effective_addr);
+	return NULL;
 }
 uint8_t IMM()
 {
-	return 0;
+	fetched_data = cpu_bus_rd(context.pc + 1);
+	return NULL;
 }
 uint8_t IMP()
 {
-	return 0;
+	return NULL;
 }
 uint8_t IND() 
 {
-	return 0;
+	effective_addr = cpu_bus_rd(context.pc + 1);
+	effective_addr += cpu_bus_rd(context.pc + 2) << 8;
+	effective_addr = cpu_bus_rd(effective_addr);
+	fetched_data = 0;
+	return NULL;
 }
 uint8_t INY() 
 {
@@ -53,7 +81,12 @@ uint8_t INY()
 }
 uint8_t XND()
 {
-	return 0;
+	effective_addr = (cpu_bus_rd(context.pc + 1) + context.x) & 0xFF; //without carry
+	effective_addr = cpu_bus_rd(effective_addr);
+	effective_addr += cpu_bus_rd((effective_addr + 1) & 0xFF) << 8; //emulate the 0xFF wrapping around bug
+	effective_addr = cpu_bus_rd(effective_addr);
+	fetched_data = 0;
+	return NULL;
 }
 uint8_t REL()
 {
@@ -61,13 +94,25 @@ uint8_t REL()
 }
 uint8_t ZPG() 
 {
-	return 0;
+	effective_addr = cpu_bus_rd(context.pc + 1);
+	fetched_data = cpu_bus_rd(effective_addr);
+	return NULL;
 }
 uint8_t ZPX() 
 {
-	return 0;
+	uint8_t effective_addr = 0; //since it's zero-paged, it's only 8 bits
+	effective_addr = cpu_bus_rd(context.pc + 1);
+	effective_addr += context.x;
+	effective_addr &= 0xFF;
+	fetched_data = cpu_bus_rd(effective_addr);
+	return NULL;
 }
 uint8_t ZPY()
 {
-	return 0;
+	uint8_t effective_addr = 0; //since it's zero-paged, it's only 8 bits
+	effective_addr = cpu_bus_rd(context.pc + 1);
+	effective_addr += context.y;
+	effective_addr &= 0xFF;
+	fetched_data = cpu_bus_rd(effective_addr);
+	return NULL;
 }

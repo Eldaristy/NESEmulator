@@ -26,10 +26,16 @@ typedef struct {
 
 extern cpu_context context;
 
+static uint16_t effective_addr;
+static uint8_t fetched_opcode;
+static uint8_t fetched_data; 
+
 typedef struct {
-	uint8_t* instruction;
-	uint8_t* addressing_mode;
+	uint8_t (*instruction)();
+	uint8_t (*addressing_mode)();
 } opcode;
+
+static opcode opcode_table[0x100];
 
 /* 
 Addressing modes 
@@ -61,5 +67,8 @@ uint8_t STX(); uint8_t STY(); uint8_t TAX(); uint8_t TAY();
 uint8_t TSX(); uint8_t TXA(); uint8_t TXS(); uint8_t TYA();
 
 uint8_t XXX(); // all illegal opcodes
+
+
+uint8_t run_clock();
 
 #endif
