@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+static uint8_t set_flags(uint16_t); //recieves uint16_t and not uint8_t in order to handle 8-bit overflows 
+
 /*
 The context of the 6502 microprocessor - all of its registers
 */
@@ -14,21 +16,29 @@ typedef struct {
 	uint16_t pc; // Program Counter
 
 	/* Flags Register */
-	uint8_t f_n : 1; // Negative 
-	uint8_t f_v : 1; // Overflow 
-	uint8_t f_UNUSED : 1;
-	uint8_t f_b : 1; // B 
-	uint8_t f_d : 1; // Decimal 
-	uint8_t f_i : 1; // Interrupt Disable
-	uint8_t f_z : 1; // Zero
 	uint8_t f_c : 1; // Carry
+	uint8_t f_z : 1; // Zero
+	uint8_t f_i : 1; // Interrupt Disable
+	uint8_t f_d : 1; // Decimal
+	uint8_t f_b : 1; // B
+	uint8_t f_UNUSED : 1;
+	uint8_t f_v : 1; // Overflow
+	uint8_t f_n : 1; // Negative 
 } cpu_context;
 
 extern cpu_context context;
-
 static uint16_t effective_addr;
 static uint8_t fetched_opcode;
 static uint8_t fetched_data; 
+
+//the flags are always set in the end of the instructions
+#define SET_C_FLAG(x) x & 0x100 
+#define SET_Z_FLAG(x) !x
+#define SET_I_FLAG(x)
+#define SET_D_FLAG(x)
+#define SET_B_FLAG(x)
+#define SET_V_FLAG(x) ((cpu_context.a ^ x) & 0x80)	  
+#define SET_N_FLAG(x) x & 0x80
 
 typedef struct {
 	uint8_t (*instruction)();
