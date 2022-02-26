@@ -1,22 +1,22 @@
-	#include "../include/cpu.h"
+#include "../include/cpu.h"
 
 opcode opcode_table[0x100] = {
-	{BRK,IMP}, {ORA,XND}, {XXX,XXX}, {XXX,XXX}, {XXX,XXX}, {ORA,ZPG}, {ASL,ZPG}, {XXX,XXX}, {PHP,IMP}, {ORA,IMM}, {ASL,ACC}, {XXX,XXX}, {XXX,XXX}, {ORA,ABS}, {ASL,ABS}, {XXX,XXX},
-	{BPL,REL}, {ORA,INY}, {XXX,XXX}, {XXX,XXX}, {XXX,XXX}, {ORA,ZPX}, {ASL,ZPX}, {XXX,XXX}, {CLC,IMP}, {ORA,ABY}, {XXX,XXX}, {XXX,XXX}, {XXX,XXX}, {ORA,ABX}, {ASL,ABX}, {XXX,XXX},
-	{JSR,ABS}, {AND,XND}, {XXX,XXX}, {XXX,XXX}, {BIT,ZPG}, {AND,ZPG}, {ROL,ZPG}, {XXX,XXX}, {PLP,IMP}, {AND,IMM}, {ROL,ACC}, {XXX,XXX}, {BIT,ABS}, {AND,ABS}, {ROL,ABS}, {XXX,XXX},
-	{BMI,REL}, {AND,INY}, {XXX,XXX}, {XXX,XXX}, {XXX,XXX}, {AND,ZPG}, {ROL,ZPG}, {XXX,XXX}, {SEC,IMP}, {AND,ABY}, {XXX,XXX}, {XXX,XXX}, {XXX,XXX}, {AND,ABX}, {ROL,ABX}, {XXX,XXX},
-	{RTI,IMP}, {EOR,XND}, {XXX,XXX}, {XXX,XXX}, {XXX,XXX}, {EOR,ZPG}, {LSR,ZPG}, {XXX,XXX}, {PHA,IMP}, {EOR,IMM}, {LSR,ACC}, {XXX,XXX}, {JMP,ABS}, {EOR,ABS}, {LSR,ABS}, {XXX,XXX},
-	{BVC,REL}, {EOR,INY}, {XXX,XXX}, {XXX,XXX}, {XXX,XXX}, {EOR,ZPG}, {LSR,ZPG}, {XXX,XXX}, {CLI,IMP}, {EOR,ABY}, {XXX,XXX}, {XXX,XXX}, {XXX,XXX}, {EOR,ABX}, {LSR,ABX}, {XXX,XXX},
-	{RTS,IMP}, {ADC,XND}, {XXX,XXX}, {XXX,XXX}, {XXX,XXX}, {ADC,ZPG}, {ROR,ZPG}, {XXX,XXX}, {PLA,IMP}, {ADC,IMM}, {ROR,ACC}, {XXX,XXX}, {JMP,IND}, {ADC,ABS}, {ROR,ABS}, {XXX,XXX},
-	{BVS,REL}, {ADC,INY}, {XXX,XXX}, {XXX,XXX}, {XXX,XXX}, {ADC,ZPG}, {ROR,ZPG}, {XXX,XXX}, {SEI,IMP}, {ADC,ABY}, {XXX,XXX}, {XXX,XXX}, {XXX,XXX}, {ADC,ABX}, {ROR,ABX}, {XXX,XXX},
-	{XXX,XXX}, {STA,XND}, {XXX,XXX}, {XXX,XXX}, {STY,ZPG}, {STA,ZPG}, {STX,ZPG}, {XXX,XXX}, {DEY,IMP}, {XXX,XXX}, {TXA,IMP}, {XXX,XXX}, {STY,ABS}, {STA,ABS}, {STX,ABS}, {XXX,XXX},
-	{BCC,REL}, {STA,INY}, {XXX,XXX}, {XXX,XXX}, {STY,ZPG}, {STA,ZPG}, {STX,ZPG}, {XXX,XXX}, {TYA,IMP}, {STA,ABY}, {TXS,IMP}, {XXX,XXX}, {XXX,XXX}, {STA,ABX}, {XXX,XXX}, {XXX,XXX},
-	{LDY,IMM}, {LDA,XND}, {LDX,IMM}, {XXX,XXX}, {LDY,ZPG}, {LDA,ZPG}, {LDX,ZPG}, {XXX,XXX}, {TAY,IMP}, {LDA,IMM}, {TAX,IMP}, {XXX,XXX}, {LDY,ABS}, {LDA,ABS}, {LDX,ABS}, {XXX,XXX},
-	{BCS,REL}, {LDA,INY}, {XXX,XXX}, {XXX,XXX}, {LDY,ZPG}, {LDA,ZPG}, {LDX,ZPG}, {XXX,XXX}, {CLV,IMP}, {LDA,ABY}, {TSX,IMP}, {XXX,XXX}, {LDY,ABX}, {LDA,ABX}, {LDX,ABY}, {XXX,XXX},
-	{CPY,IMM}, {CMP,XND}, {XXX,XXX}, {XXX,XXX}, {CPY,ZPG}, {CMP,ZPG}, {DEC,ZPG}, {XXX,XXX}, {INY,IMP}, {CMP,IMM}, {DEX,IMP}, {XXX,XXX}, {CPY,ABS}, {CMP,ABS}, {DEC,ABS}, {XXX,XXX},
-	{BNE,REL}, {CMP,INY}, {XXX,XXX}, {XXX,XXX}, {XXX,XXX}, {CMP,ZPG}, {DEC,ZPG}, {XXX,XXX}, {CLD,IMP}, {CMP,ABY}, {XXX,XXX}, {XXX,XXX}, {XXX,XXX}, {CMP,ABX}, {DEC,ABX}, {XXX,XXX},
-	{CPX,IMM}, {SBC,XND}, {XXX,XXX}, {XXX,XXX}, {CPX,ZPG}, {SBC,ZPG}, {INC,ZPG}, {XXX,XXX}, {INX,IMP}, {SBC,IMM}, {NOP,IMP}, {XXX,XXX}, {CPX,ABS}, {SBC,ABS}, {INC,ABS}, {XXX,XXX},
-	{BEQ,REL}, {SBC,INY}, {XXX,XXX}, {XXX,XXX}, {XXX,XXX}, {SBC,ZPG}, {INC,ZPG}, {XXX,XXX}, {SED,IMP}, {SBC,ABY}, {XXX,XXX}, {XXX,XXX}, {XXX,XXX}, {SBC,ABX}, {INC,ABX}, {XXX,XXX}
+	{i_BRK,a_IMP}, {i_ORA,a_XND}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {i_ORA,a_ZPG}, {i_ASL,a_ZPG}, {x_XXX,x_XXX}, {i_PHP,a_IMP}, {i_ORA,a_IMM}, {i_ASL,a_ACC}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {i_ORA,a_ABS}, {i_ASL,a_ABS}, {x_XXX,x_XXX},
+	{i_BPL,a_REL}, {i_ORA,a_INY}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {i_ORA,a_ZPX}, {i_ASL,a_ZPX}, {x_XXX,x_XXX}, {i_CLC,a_IMP}, {i_ORA,a_ABY}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {i_ORA,a_ABX}, {i_ASL,a_ABX}, {x_XXX,x_XXX},
+	{i_JSR,a_ABS}, {i_AND,a_XND}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {i_BIT,a_ZPG}, {i_AND,a_ZPG}, {i_ROL,a_ZPG}, {x_XXX,x_XXX}, {i_PLP,a_IMP}, {i_AND,a_IMM}, {i_ROL,a_ACC}, {x_XXX,x_XXX}, {i_BIT,a_ABS}, {i_AND,a_ABS}, {i_ROL,a_ABS}, {x_XXX,x_XXX},
+	{i_BMI,a_REL}, {i_AND,a_INY}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {i_AND,a_ZPX}, {i_ROL,a_ZPX}, {x_XXX,x_XXX}, {i_SEC,a_IMP}, {i_AND,a_ABY}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {i_AND,a_ABX}, {i_ROL,a_ABX}, {x_XXX,x_XXX},
+	{i_RTI,a_IMP}, {i_EOR,a_XND}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {i_EOR,a_ZPG}, {i_LSR,a_ZPG}, {x_XXX,x_XXX}, {i_PHA,a_IMP}, {i_EOR,a_IMM}, {i_LSR,a_ACC}, {x_XXX,x_XXX}, {i_JMP,a_ABS}, {i_EOR,a_ABS}, {i_LSR,a_ABS}, {x_XXX,x_XXX},
+	{i_BVC,a_REL}, {i_EOR,a_INY}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {i_EOR,a_ZPX}, {i_LSR,a_ZPX}, {x_XXX,x_XXX}, {i_CLI,a_IMP}, {i_EOR,a_ABY}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {i_EOR,a_ABX}, {i_LSR,a_ABX}, {x_XXX,x_XXX},
+	{i_RTS,a_IMP}, {i_ADC,a_XND}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {i_ADC,a_ZPG}, {i_ROR,a_ZPG}, {x_XXX,x_XXX}, {i_PLA,a_IMP}, {i_ADC,a_IMM}, {i_ROR,a_ACC}, {x_XXX,x_XXX}, {i_JMP,a_IND}, {i_ADC,a_ABS}, {i_ROR,a_ABS}, {x_XXX,x_XXX},
+	{i_BVS,a_REL}, {i_ADC,a_INY}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {i_ADC,a_ZPX}, {i_ROR,a_ZPX}, {x_XXX,x_XXX}, {i_SEI,a_IMP}, {i_ADC,a_ABY}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {i_ADC,a_ABX}, {i_ROR,a_ABX}, {x_XXX,x_XXX},
+	{x_XXX,x_XXX}, {i_STA,a_XND}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {i_STY,a_ZPG}, {i_STA,a_ZPG}, {i_STX,a_ZPG}, {x_XXX,x_XXX}, {i_DEY,a_IMP}, {x_XXX,x_XXX}, {i_TXA,a_IMP}, {x_XXX,x_XXX}, {i_STY,a_ABS}, {i_STA,a_ABS}, {i_STX,a_ABS}, {x_XXX,x_XXX},
+	{i_BCC,a_REL}, {i_STA,a_INY}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {i_STY,a_ZPX}, {i_STA,a_ZPX}, {i_STX,a_ZPY}, {x_XXX,x_XXX}, {i_TYA,a_IMP}, {i_STA,a_ABY}, {i_TXS,a_IMP}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {i_STA,a_ABX}, {x_XXX,x_XXX}, {x_XXX,x_XXX},
+	{i_LDY,a_IMM}, {i_LDA,a_XND}, {i_LDX,a_IMM}, {x_XXX,x_XXX}, {i_LDY,a_ZPG}, {i_LDA,a_ZPG}, {i_LDX,a_ZPG}, {x_XXX,x_XXX}, {i_TAY,a_IMP}, {i_LDA,a_IMM}, {i_TAX,a_IMP}, {x_XXX,x_XXX}, {i_LDY,a_ABS}, {i_LDA,a_ABS}, {i_LDX,a_ABS}, {x_XXX,x_XXX},
+	{i_BCS,a_REL}, {i_LDA,a_INY}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {i_LDY,a_ZPX}, {i_LDA,a_ZPX}, {i_LDX,a_ZPY}, {x_XXX,x_XXX}, {i_CLV,a_IMP}, {i_LDA,a_ABY}, {i_TSX,a_IMP}, {x_XXX,x_XXX}, {i_LDY,a_ABX}, {i_LDA,a_ABX}, {i_LDX,a_ABY}, {x_XXX,x_XXX},
+	{i_CPY,a_IMM}, {i_CMP,a_XND}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {i_CPY,a_ZPG}, {i_CMP,a_ZPG}, {i_DEC,a_ZPG}, {x_XXX,x_XXX}, {a_INY,a_IMP}, {i_CMP,a_IMM}, {i_DEX,a_IMP}, {x_XXX,x_XXX}, {i_CPY,a_ABS}, {i_CMP,a_ABS}, {i_DEC,a_ABS}, {x_XXX,x_XXX},
+	{i_BNE,a_REL}, {i_CMP,a_INY}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {i_CMP,a_ZPX}, {i_DEC,a_ZPX}, {x_XXX,x_XXX}, {i_CLD,a_IMP}, {i_CMP,a_ABY}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {i_CMP,a_ABX}, {i_DEC,a_ABX}, {x_XXX,x_XXX},
+	{i_CPX,a_IMM}, {i_SBC,a_XND}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {i_CPX,a_ZPG}, {i_SBC,a_ZPG}, {i_INC,a_ZPG}, {x_XXX,x_XXX}, {i_INX,a_IMP}, {i_SBC,a_IMM}, {i_NOP,a_IMP}, {x_XXX,x_XXX}, {i_CPX,a_ABS}, {i_SBC,a_ABS}, {i_INC,a_ABS}, {x_XXX,x_XXX},
+	{i_BEQ,a_REL}, {i_SBC,a_INY}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {i_SBC,a_ZPX}, {i_INC,a_ZPX}, {x_XXX,x_XXX}, {i_SED,a_IMP}, {i_SBC,a_ABY}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {i_SBC,a_ABX}, {i_INC,a_ABX}, {x_XXX,x_XXX}
 };
 
 uint8_t run_clock()
@@ -31,18 +31,18 @@ uint8_t run_clock()
 	}
 }
 //The addressing methods return the data read from the register, NULL if there isn't any register
-uint8_t ACC()
+uint8_t a_ACC()
 {
 	return context.a;
 }
-uint8_t ABS()
+uint8_t a_ABS()
 {
 	effective_addr = cpu_bus_rd(context.pc + 1); //low byte read from lower address
 	effective_addr += cpu_bus_rd(context.pc + 2) << 8; //high byte read from higher address
 	fetched_data = cpu_bus_rd(effective_addr);
 	return NULL;
 }
-uint8_t ABX()
+uint8_t a_ABX()
 {
 	effective_addr = cpu_bus_rd(context.pc + 1); //low byte read from lower address
 	effective_addr += cpu_bus_rd(context.pc + 2) << 8; //high byte read from higher address
@@ -50,7 +50,7 @@ uint8_t ABX()
 	fetched_data = cpu_bus_rd(effective_addr);
 	return NULL;
 }
-uint8_t ABY()
+uint8_t a_ABY()
 {
 	effective_addr = cpu_bus_rd(context.pc + 1); //low byte read from lower address
 	effective_addr += cpu_bus_rd(context.pc + 2) << 8; //high byte read from higher address
@@ -58,16 +58,17 @@ uint8_t ABY()
 	fetched_data = cpu_bus_rd(effective_addr);
 	return NULL;
 }
-uint8_t IMM()
+uint8_t a_IMM()
 {
-	fetched_data = cpu_bus_rd(context.pc + 1);
+	effective_addr = context.pc + 1;
+	fetched_data = cpu_bus_rd(effective_addr);
 	return NULL;
 }
-uint8_t IMP()
+uint8_t a_IMP()
 {
 	return NULL;
 }
-uint8_t IND() 
+uint8_t a_IND() 
 {
 	effective_addr = cpu_bus_rd(context.pc + 1);
 	effective_addr += cpu_bus_rd(context.pc + 2) << 8;
@@ -75,11 +76,11 @@ uint8_t IND()
 	fetched_data = 0;
 	return NULL;
 }
-uint8_t INY() 
+uint8_t a_INY() 
 {
-	return 0;
+	assert(!"not implemented");
 }
-uint8_t XND()
+uint8_t a_XND()
 {
 	effective_addr = (cpu_bus_rd(context.pc + 1) + context.x) & 0xFF; //without carry
 	effective_addr = cpu_bus_rd(effective_addr);
@@ -88,17 +89,17 @@ uint8_t XND()
 	fetched_data = 0;
 	return NULL;
 }
-uint8_t REL()
+uint8_t a_REL()
 {
-	return 0;
+	assert(!"not implemented");
 }
-uint8_t ZPG() 
+uint8_t a_ZPG() 
 {
 	effective_addr = cpu_bus_rd(context.pc + 1);
 	fetched_data = cpu_bus_rd(effective_addr);
 	return NULL;
 }
-uint8_t ZPX() 
+uint8_t a_ZPX() 
 {
 	uint8_t effective_addr = 0; //since it's zero-paged, it's only 8 bits
 	effective_addr = cpu_bus_rd(context.pc + 1);
@@ -107,7 +108,7 @@ uint8_t ZPX()
 	fetched_data = cpu_bus_rd(effective_addr);
 	return NULL;
 }
-uint8_t ZPY()
+uint8_t a_ZPY()
 {
 	uint8_t effective_addr = 0; //since it's zero-paged, it's only 8 bits
 	effective_addr = cpu_bus_rd(context.pc + 1);
@@ -118,21 +119,338 @@ uint8_t ZPY()
 }
 
 //instructions
-uint8_t ADC()
+uint8_t i_ADC()
 {
-	context.a += fetched_data + context.flags_c;	
+	result = fetched_data + (context.flags & FLAG_C);	
+	context.a += result;
+
+	SET_N_FLAG(result);
+	SET_Z_FLAG(result);
+	SET_C_FLAG(result);
+	SET_V_FLAG(result);
 }
-uint8_t AND(); uint8_t ASL(); uint8_t BCC();
-uint8_t BCS(); uint8_t BEQ(); uint8_t BIT(); uint8_t BMI();
-uint8_t BNE(); uint8_t BPL(); uint8_t BRK(); uint8_t BVC();
-uint8_t BVS(); uint8_t CLC(); uint8_t CLD(); uint8_t CLI();
-uint8_t CLV(); uint8_t CMP(); uint8_t CPX(); uint8_t CPY();
-uint8_t DEC(); uint8_t DEX(); uint8_t DEY(); uint8_t EOR();
-uint8_t INC(); uint8_t INX(); uint8_t INY(); uint8_t JMP();
-uint8_t JSR(); uint8_t LDA(); uint8_t LDX(); uint8_t LDY();
-uint8_t LSR(); uint8_t NOP(); uint8_t ORA(); uint8_t PHA();
-uint8_t PHP(); uint8_t PLA(); uint8_t PLP(); uint8_t ROL();
-uint8_t ROR(); uint8_t RTI(); uint8_t RTS(); uint8_t SBC();
-uint8_t SEC(); uint8_t SED(); uint8_t SEI(); uint8_t STA();
-uint8_t STX(); uint8_t STY(); uint8_t TAX(); uint8_t TAY();
-uint8_t TSX(); uint8_t TXA(); uint8_t TXS(); uint8_t TYA();
+uint8_t i_AND()
+{
+	result = fetched_data & context.a;
+	context.a = result;
+
+	SET_N_FLAG(result);
+	SET_Z_FLAG(result);
+}
+uint8_t i_ASL()
+{
+	if(opcode_table[fetched_opcode].addressing_mode == a_ACC) {
+		result = context.a << 1;
+		context.a = result;
+	}
+	else {
+		result = fetched_data << 1;
+		cpu_bus_wr(effective_addr, result);
+	}
+
+	SET_N_FLAG(result);
+	SET_Z_FLAG(result);
+	SET_C_FLAG(result);
+}
+uint8_t i_BCC()
+{
+	if (!(context.flags & FLAG_C)) {
+		context.pc = effective_addr;
+	}
+}
+uint8_t i_BCS() {
+	if (context.flags & FLAG_C) {
+		context.pc = effective_addr;
+	}
+} 
+uint8_t i_BEQ() {
+	if (context.flags & FLAG_Z) {
+		context.pc = effective_addr;
+	}
+}
+uint8_t i_BIT() {
+	result = fetched_data & context.a;
+
+	SET_N_FLAG(result);
+	SET_Z_FLAG(result);
+	SET_V_FLAG(result);
+}
+uint8_t i_BMI() {
+	if (context.flags & FLAG_N) {
+		context.pc = effective_addr;
+	}
+}
+uint8_t i_BNE() {
+	if (!(context.flags & FLAG_Z)) {
+		context.pc = effective_addr;
+	}
+}
+uint8_t i_BPL() {
+	if (!(context.flags & FLAG_N)) {
+		context.pc = effective_addr;
+	}
+}
+uint8_t i_BRK() {
+	assert(!"not implemented");
+	context.flags = SET_FLAG_ON(FLAG_I);
+}
+uint8_t i_BVC() {
+	if (!(context.flags & FLAG_V)) {
+		context.pc = effective_addr;
+	}
+}
+uint8_t i_BVS() {
+	if (context.flags & FLAG_V) {
+		context.pc = effective_addr;
+	}
+}
+uint8_t i_CLC() {
+	context.flags = SET_FLAG_OFF(FLAG_C);
+}
+uint8_t i_CLD() {
+	context.flags = SET_FLAG_OFF(FLAG_D);
+}
+uint8_t i_CLI() {
+	context.flags = SET_FLAG_OFF(FLAG_I);
+}
+uint8_t i_CLV() {
+	context.flags = SET_FLAG_OFF(FLAG_V);
+}
+uint8_t i_CMP() {
+	result = context.a - fetched_data;
+
+	SET_N_FLAG(result);
+	SET_Z_FLAG(result);
+	SET_C_FLAG(result);
+}
+uint8_t i_CPX() {
+	result = context.x - fetched_data;
+
+	SET_N_FLAG(result);
+	SET_Z_FLAG(result);
+	SET_C_FLAG(result);
+}
+uint8_t i_CPY() {
+	result = context.y - fetched_data;
+
+	SET_N_FLAG(result);
+	SET_Z_FLAG(result);
+	SET_C_FLAG(result);
+}
+uint8_t i_DEC() {
+	result = cpu_bus_rd(effective_addr) - 1;
+	cpu_bus_wr(effective_addr, result);
+
+	SET_N_FLAG(result);
+	SET_Z_FLAG(result);
+}
+uint8_t i_DEX() {
+	result = --(context.x);
+
+	SET_N_FLAG(result);
+	SET_Z_FLAG(result);
+}
+uint8_t i_DEY() {
+	result = --(context.y);
+
+	SET_N_FLAG(result);
+	SET_Z_FLAG(result);
+}
+uint8_t i_EOR() {
+	result = fetched_data ^ context.a;
+	context.a = result;
+
+	SET_N_FLAG(result);
+	SET_Z_FLAG(result);
+}
+uint8_t i_INC() {
+	result = cpu_bus_rd(effective_addr) + 1;
+	cpu_bus_wr(effective_addr, result);
+
+	SET_N_FLAG(result);
+	SET_Z_FLAG(result);
+} 
+uint8_t i_INX() {
+	result = ++(context.x);
+
+	SET_N_FLAG(result);
+	SET_Z_FLAG(result);
+} 
+uint8_t i_INY() {
+	result = ++(context.y);
+
+	SET_N_FLAG(result);
+	SET_Z_FLAG(result);
+} 
+uint8_t i_JMP() {
+	context.pc = effective_addr;
+}
+uint8_t i_JSR() {
+	result = context.pc + 3;
+	STK_PUSH(result >> 8); //high byte
+	STK_PUSH(result & 0xFF); //low byte
+	context.pc = effective_addr;
+}
+uint8_t i_LDA() {
+	result = cpu_bus_rd(effective_addr);
+	context.a = result;
+
+	SET_N_FLAG(result);
+	SET_Z_FLAG(result);
+} 
+uint8_t i_LDX() {
+	result = cpu_bus_rd(effective_addr);
+	context.x = result;
+
+	SET_N_FLAG(result);
+	SET_Z_FLAG(result);
+}
+uint8_t i_LDY() {
+	result = cpu_bus_rd(effective_addr);
+	context.y = result;
+
+	SET_N_FLAG(result);
+	SET_Z_FLAG(result);
+}
+uint8_t i_LSR() {
+	if (opcode_table[fetched_opcode].addressing_mode == a_ACC) {
+		result = context.a >> 1;
+		context.a = result;
+	}
+	else {
+		result = fetched_data >> 1;
+		cpu_bus_wr(effective_addr, result);
+	}
+
+	context.flags = SET_FLAG_OFF(FLAG_N);
+	SET_Z_FLAG(result);
+	SET_C_FLAG(result);
+} 
+uint8_t i_NOP() {
+
+} 
+uint8_t i_ORA() {
+	result = fetched_data | context.a;
+	context.a = result;
+
+	SET_N_FLAG(result);
+	SET_Z_FLAG(result);
+} 
+uint8_t i_PHA() {
+	STK_PUSH(context.a);
+}
+uint8_t i_PHP() {
+	STK_PUSH(context.flags);
+} 
+uint8_t i_PLA() {
+	STK_POP(result);
+	context.a = result;
+
+	SET_N_FLAG(result);
+	SET_Z_FLAG(result);
+} 
+uint8_t i_PLP() {
+	STK_POP(result);
+	context.flags = result;
+
+	SET_N_FLAG(result);
+	SET_Z_FLAG(result);
+} 
+uint8_t i_ROL() {
+	if (opcode_table[fetched_opcode].addressing_mode == a_ACC) {
+		result = context.a;
+		result <<= 1;
+		result |= context.flags & FLAG_C;
+		context.a = result;
+	}
+	else {
+		result = fetched_data;
+		result <<= 1;
+		result |= context.flags & FLAG_C;
+		cpu_bus_wr(effective_addr, result);
+	}
+
+	SET_N_FLAG(result);
+	SET_Z_FLAG(result);
+	SET_C_FLAG(result);
+}
+uint8_t i_ROR() {
+	if (opcode_table[fetched_opcode].addressing_mode == a_ACC) {
+		result = context.a;
+		result |= result & 0x1 << 9;
+		result >>= 1;
+		result |= context.flags & FLAG_C << 7;
+		context.a = result;
+	}
+	else {
+		result = fetched_data;
+		result |= result & 0x1 << 9;
+		result >>= 1;
+		result |= context.flags & FLAG_C << 7;
+		cpu_bus_wr(effective_addr, result);
+	}
+
+	SET_N_FLAG(result);
+	SET_Z_FLAG(result);
+	SET_C_FLAG(result);
+} 
+uint8_t i_RTI() {
+	assert(!"not implemented");
+} 
+uint8_t i_RTS() {
+	assert(!"not implemented");
+} 
+uint8_t i_SBC() {
+	assert(!"not implemented");
+}
+uint8_t i_SEC() {
+	context.flags = SET_FLAG_ON(FLAG_C);
+} 
+uint8_t i_SED() {
+	context.flags = SET_FLAG_ON(FLAG_D);
+} 
+uint8_t i_SEI() {
+	context.flags = SET_FLAG_ON(FLAG_I);
+} 
+uint8_t i_STA() {
+	cpu_bus_wr(effective_addr, context.a);
+}
+uint8_t i_STX() {
+	cpu_bus_wr(effective_addr, context.x);
+} 
+uint8_t i_STY() {
+	cpu_bus_wr(effective_addr, context.y);
+} 
+uint8_t i_TAX() {
+	context.x = context.a;
+
+	SET_N_FLAG(context.x);
+	SET_Z_FLAG(context.x);
+} 
+uint8_t i_TAY() {
+	context.y = context.a;
+
+	SET_N_FLAG(context.y);
+	SET_Z_FLAG(context.y);
+}
+uint8_t i_TSX() {
+	context.x = context.sp;
+
+	SET_N_FLAG(context.x);
+	SET_Z_FLAG(context.x);
+} 
+uint8_t i_TXA() {
+	context.a = context.x;
+
+	SET_N_FLAG(context.a);
+	SET_Z_FLAG(context.a);
+} 
+uint8_t i_TXS() {
+	context.sp = context.x;
+} 
+uint8_t i_TYA() {
+	context.a = context.y;
+
+	SET_N_FLAG(context.a);
+	SET_Z_FLAG(context.a);
+}

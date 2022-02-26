@@ -140,9 +140,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\include\cpu.h" />
+    <ClInclude Include="..\include\cpu_bus.h" />
+    <ClInclude Include="..\include\ram.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\cpu.c" />
+    <ClCompile Include="..\src\cpu_bus.c" />
+    <ClCompile Include="..\src\ram.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
