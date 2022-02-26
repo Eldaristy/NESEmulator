@@ -18,16 +18,16 @@ typedef struct {
 	uint8_t flags; // Status Register
 } cpu_context;
 
-#define FLAG_C 1 << 0 // Carry
-#define FLAG_Z 1 << 1 // Zero
-#define FLAG_I 1 << 2 // Interrupt Disable
-#define FLAG_D 1 << 3 // Decimal
-#define FLAG_B 1 << 4 // B
-#define FLAG_UNUSED 1 << 5
-#define FLAG_V 1 << 6 // Overflow
-#define FLAG_N 1 << 7 //Negative
+#define FLAG_C (1 << 0) // Carry
+#define FLAG_Z (1 << 1) // Zero
+#define FLAG_I (1 << 2) // Interrupt Disable
+#define FLAG_D (1 << 3) // Decimal
+#define FLAG_B (1 << 4) // B
+#define FLAG_UNUSED (1 << 5)
+#define FLAG_V (1 << 6) // Overflow
+#define FLAG_N (1 << 7) //Negative
 
-extern cpu_context context;
+static cpu_context context;
 static uint16_t effective_addr;
 static uint8_t fetched_opcode;
 static uint8_t fetched_data; 
@@ -37,8 +37,8 @@ static uint16_t result;
 #define STK_POP(x) x = cpu_bus_rd((context.sp++ | 0x100 + 1))					
 
 
-#define SET_FLAG_ON(f) context.flags | f
-#define SET_FLAG_OFF(f) context.flags & ~f
+#define SET_FLAG_ON(f) (context.flags | f)
+#define SET_FLAG_OFF(f) (context.flags & ~f)
 
 //the flags are checked and set in the end of the instructions
 #define SET_C_FLAG(x) context.flags = (x & 0x100) ? SET_FLAG_ON(FLAG_C) : SET_FLAG_OFF(FLAG_C)
@@ -50,8 +50,8 @@ static uint16_t result;
 #define SET_N_FLAG(x) context.flags = (x & 0x80) ? SET_FLAG_ON(FLAG_N) : SET_FLAG_OFF(FLAG_N)
 
 typedef struct {
-	uint8_t (*instruction)();
-	uint8_t (*addressing_mode)();
+	void (*instruction)();
+	void (*addressing_mode)();
 } opcode;
 
 static opcode opcode_table[0x100];
@@ -59,34 +59,35 @@ static opcode opcode_table[0x100];
 /* 
 Addressing modes - "a" stands for addresing
 */
-uint8_t a_ACC();
-uint8_t a_ABS(); uint8_t a_ABX(); uint8_t a_ABY();
-uint8_t a_IMM();
-uint8_t a_IMP();
-uint8_t a_IND(); uint8_t a_INY(); uint8_t a_XND();
-uint8_t a_REL();
-uint8_t a_ZPG(); uint8_t a_ZPX(); uint8_t a_ZPY();
+void a_ACC();
+void a_ABS(); void a_ABX(); void a_ABY();
+void a_IMM();
+void a_IMP();
+void a_IND(); void a_INY(); void a_XND();
+void a_REL();
+void a_ZPG(); void a_ZPX(); void a_ZPY();
 
 /*
 Instructions - "i" stands for instruction 
 */
-uint8_t i_ADC(); uint8_t i_AND(); uint8_t i_ASL(); uint8_t i_BCC();
-uint8_t i_BCS(); uint8_t i_BEQ(); uint8_t i_BIT(); uint8_t i_BMI();
-uint8_t i_BNE(); uint8_t i_BPL(); uint8_t i_BRK(); uint8_t i_BVC();
-uint8_t i_BVS(); uint8_t i_CLC(); uint8_t i_CLD(); uint8_t i_CLI();
-uint8_t i_CLV(); uint8_t i_CMP(); uint8_t i_CPX(); uint8_t i_CPY();
-uint8_t i_DEC(); uint8_t i_DEX(); uint8_t i_DEY(); uint8_t i_EOR();
-uint8_t i_INC(); uint8_t i_INX(); uint8_t i_INY(); uint8_t i_JMP();
-uint8_t i_JSR(); uint8_t i_LDA(); uint8_t i_LDX(); uint8_t i_LDY();
-uint8_t i_LSR(); uint8_t i_NOP(); uint8_t i_ORA(); uint8_t i_PHA();
-uint8_t i_PHP(); uint8_t i_PLA(); uint8_t i_PLP(); uint8_t i_ROL();
-uint8_t i_ROR(); uint8_t i_RTI(); uint8_t i_RTS(); uint8_t i_SBC();
-uint8_t i_SEC(); uint8_t i_SED(); uint8_t i_SEI(); uint8_t i_STA();
-uint8_t i_STX(); uint8_t i_STY(); uint8_t i_TAX(); uint8_t i_TAY();
-uint8_t i_TSX(); uint8_t i_TXA(); uint8_t i_TXS(); uint8_t i_TYA();
+void i_ADC(); void i_AND(); void i_ASL(); void i_BCC();
+void i_BCS(); void i_BEQ(); void i_BIT(); void i_BMI();
+void i_BNE(); void i_BPL(); void i_BRK(); void i_BVC();
+void i_BVS(); void i_CLC(); void i_CLD(); void i_CLI();
+void i_CLV(); void i_CMP(); void i_CPX(); void i_CPY();
+void i_DEC(); void i_DEX(); void i_DEY(); void i_EOR();
+void i_INC(); void i_INX(); void i_INY(); void i_JMP();
+void i_JSR(); void i_LDA(); void i_LDX(); void i_LDY();
+void i_LSR(); void i_NOP(); void i_ORA(); void i_PHA();
+void i_PHP(); void i_PLA(); void i_PLP(); void i_ROL();
+void i_ROR(); void i_RTI(); void i_RTS(); void i_SBC();
+void i_SEC(); void i_SED(); void i_SEI(); void i_STA();
+void i_STX(); void i_STY(); void i_TAX(); void i_TAY();
+void i_TSX(); void i_TXA(); void i_TXS(); void i_TYA();
 
-uint8_t x_XXX(); // all illegal opcodes -
-// "x" is just to fit the name pattern of other addressing modes and instrucitons functions
+
+void x_XXX(); // all illegal opcodes
+
 
 
 uint8_t run_clock();

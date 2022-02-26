@@ -30,96 +30,85 @@ uint8_t run_clock()
 		opcode_table[fetched_opcode].addressing_mode();
 	}
 }
-//The addressing methods return the data read from the register, NULL if there isn't any register
-uint8_t a_ACC()
+void a_ACC()
 {
-	return context.a;
+	fetched_data = context.a;
 }
-uint8_t a_ABS()
+void a_ABS()
 {
 	effective_addr = cpu_bus_rd(context.pc + 1); //low byte read from lower address
 	effective_addr += cpu_bus_rd(context.pc + 2) << 8; //high byte read from higher address
 	fetched_data = cpu_bus_rd(effective_addr);
-	return NULL;
 }
-uint8_t a_ABX()
+void a_ABX()
 {
 	effective_addr = cpu_bus_rd(context.pc + 1); //low byte read from lower address
 	effective_addr += cpu_bus_rd(context.pc + 2) << 8; //high byte read from higher address
 	effective_addr += context.x;
 	fetched_data = cpu_bus_rd(effective_addr);
-	return NULL;
 }
-uint8_t a_ABY()
+void a_ABY()
 {
 	effective_addr = cpu_bus_rd(context.pc + 1); //low byte read from lower address
 	effective_addr += cpu_bus_rd(context.pc + 2) << 8; //high byte read from higher address
 	effective_addr += context.y;
 	fetched_data = cpu_bus_rd(effective_addr);
-	return NULL;
 }
-uint8_t a_IMM()
+void a_IMM()
 {
 	effective_addr = context.pc + 1;
 	fetched_data = cpu_bus_rd(effective_addr);
-	return NULL;
 }
-uint8_t a_IMP()
+void a_IMP()
 {
-	return NULL;
 }
-uint8_t a_IND() 
+void a_IND() 
 {
 	effective_addr = cpu_bus_rd(context.pc + 1);
 	effective_addr += cpu_bus_rd(context.pc + 2) << 8;
 	effective_addr = cpu_bus_rd(effective_addr);
 	fetched_data = 0;
-	return NULL;
 }
-uint8_t a_INY() 
+void a_INY() 
 {
 	assert(!"not implemented");
 }
-uint8_t a_XND()
+void a_XND()
 {
 	effective_addr = (cpu_bus_rd(context.pc + 1) + context.x) & 0xFF; //without carry
 	effective_addr = cpu_bus_rd(effective_addr);
 	effective_addr += cpu_bus_rd((effective_addr + 1) & 0xFF) << 8; //emulate the 0xFF wrapping around bug
 	effective_addr = cpu_bus_rd(effective_addr);
 	fetched_data = 0;
-	return NULL;
 }
-uint8_t a_REL()
+void a_REL()
 {
 	assert(!"not implemented");
 }
-uint8_t a_ZPG() 
+void a_ZPG() 
 {
 	effective_addr = cpu_bus_rd(context.pc + 1);
 	fetched_data = cpu_bus_rd(effective_addr);
-	return NULL;
 }
-uint8_t a_ZPX() 
+void a_ZPX() 
 {
 	uint8_t effective_addr = 0; //since it's zero-paged, it's only 8 bits
 	effective_addr = cpu_bus_rd(context.pc + 1);
 	effective_addr += context.x;
 	effective_addr &= 0xFF;
 	fetched_data = cpu_bus_rd(effective_addr);
-	return NULL;
 }
-uint8_t a_ZPY()
+void a_ZPY()
 {
 	uint8_t effective_addr = 0; //since it's zero-paged, it's only 8 bits
 	effective_addr = cpu_bus_rd(context.pc + 1);
 	effective_addr += context.y;
 	effective_addr &= 0xFF;
 	fetched_data = cpu_bus_rd(effective_addr);
-	return NULL;
 }
 
 //instructions
-uint8_t i_ADC()
+void i_ADC()
 {
 	result = fetched_data + (context.flags & FLAG_C);	
 	context.a += result;
@@ -129,328 +118,333 @@ uint8_t i_ADC()
 	SET_C_FLAG(result);
 	SET_V_FLAG(result);
 }
-uint8_t i_AND()
+void i_AND()
 {
 	result = fetched_data & context.a;
-	context.a = result;
+	context.a = (uint8_t)result;
 
 	SET_N_FLAG(result);
 	SET_Z_FLAG(result);
 }
-uint8_t i_ASL()
+void i_ASL()
 {
 	if(opcode_table[fetched_opcode].addressing_mode == a_ACC) {
 		result = context.a << 1;
-		context.a = result;
+		context.a = (uint8_t)result;
 	}
 	else {
 		result = fetched_data << 1;
-		cpu_bus_wr(effective_addr, result);
+		cpu_bus_wr(effective_addr, (uint8_t)result);
 	}
 
 	SET_N_FLAG(result);
 	SET_Z_FLAG(result);
 	SET_C_FLAG(result);
 }
-uint8_t i_BCC()
+void i_BCC()
 {
 	if (!(context.flags & FLAG_C)) {
 		context.pc = effective_addr;
 	}
 }
-uint8_t i_BCS() {
+void i_BCS() {
 	if (context.flags & FLAG_C) {
 		context.pc = effective_addr;
 	}
 } 
-uint8_t i_BEQ() {
+void i_BEQ() {
 	if (context.flags & FLAG_Z) {
 		context.pc = effective_addr;
 	}
 }
-uint8_t i_BIT() {
+void i_BIT() {
 	result = fetched_data & context.a;
 
 	SET_N_FLAG(result);
 	SET_Z_FLAG(result);
 	SET_V_FLAG(result);
 }
-uint8_t i_BMI() {
+void i_BMI() {
 	if (context.flags & FLAG_N) {
 		context.pc = effective_addr;
 	}
 }
-uint8_t i_BNE() {
+void i_BNE() {
 	if (!(context.flags & FLAG_Z)) {
 		context.pc = effective_addr;
 	}
 }
-uint8_t i_BPL() {
+void i_BPL() {
 	if (!(context.flags & FLAG_N)) {
 		context.pc = effective_addr;
 	}
 }
-uint8_t i_BRK() {
+void i_BRK() {
 	assert(!"not implemented");
 	context.flags = SET_FLAG_ON(FLAG_I);
 }
-uint8_t i_BVC() {
+void i_BVC() {
 	if (!(context.flags & FLAG_V)) {
 		context.pc = effective_addr;
 	}
 }
-uint8_t i_BVS() {
+void i_BVS() {
 	if (context.flags & FLAG_V) {
 		context.pc = effective_addr;
 	}
 }
-uint8_t i_CLC() {
+void i_CLC() {
 	context.flags = SET_FLAG_OFF(FLAG_C);
 }
-uint8_t i_CLD() {
+void i_CLD() {
 	context.flags = SET_FLAG_OFF(FLAG_D);
 }
-uint8_t i_CLI() {
+void i_CLI() {
 	context.flags = SET_FLAG_OFF(FLAG_I);
 }
-uint8_t i_CLV() {
+void i_CLV() {
 	context.flags = SET_FLAG_OFF(FLAG_V);
 }
-uint8_t i_CMP() {
+void i_CMP() {
 	result = context.a - fetched_data;
 
 	SET_N_FLAG(result);
 	SET_Z_FLAG(result);
 	SET_C_FLAG(result);
 }
-uint8_t i_CPX() {
+void i_CPX() {
 	result = context.x - fetched_data;
 
 	SET_N_FLAG(result);
 	SET_Z_FLAG(result);
 	SET_C_FLAG(result);
 }
-uint8_t i_CPY() {
+void i_CPY() {
 	result = context.y - fetched_data;
 
 	SET_N_FLAG(result);
 	SET_Z_FLAG(result);
 	SET_C_FLAG(result);
 }
-uint8_t i_DEC() {
+void i_DEC() {
 	result = cpu_bus_rd(effective_addr) - 1;
-	cpu_bus_wr(effective_addr, result);
+	cpu_bus_wr(effective_addr, (uint8_t)result);
 
 	SET_N_FLAG(result);
 	SET_Z_FLAG(result);
 }
-uint8_t i_DEX() {
+void i_DEX() {
 	result = --(context.x);
 
 	SET_N_FLAG(result);
 	SET_Z_FLAG(result);
 }
-uint8_t i_DEY() {
+void i_DEY() {
 	result = --(context.y);
 
 	SET_N_FLAG(result);
 	SET_Z_FLAG(result);
 }
-uint8_t i_EOR() {
+void i_EOR() {
 	result = fetched_data ^ context.a;
-	context.a = result;
+	context.a = (uint8_t)result;
 
 	SET_N_FLAG(result);
 	SET_Z_FLAG(result);
 }
-uint8_t i_INC() {
+void i_INC() {
 	result = cpu_bus_rd(effective_addr) + 1;
-	cpu_bus_wr(effective_addr, result);
+	cpu_bus_wr(effective_addr, (uint8_t)result);
 
 	SET_N_FLAG(result);
 	SET_Z_FLAG(result);
 } 
-uint8_t i_INX() {
+void i_INX() {
 	result = ++(context.x);
 
 	SET_N_FLAG(result);
 	SET_Z_FLAG(result);
 } 
-uint8_t i_INY() {
+void i_INY() {
 	result = ++(context.y);
 
 	SET_N_FLAG(result);
 	SET_Z_FLAG(result);
 } 
-uint8_t i_JMP() {
+void i_JMP() {
 	context.pc = effective_addr;
 }
-uint8_t i_JSR() {
+void i_JSR() {
 	result = context.pc + 3;
 	STK_PUSH(result >> 8); //high byte
 	STK_PUSH(result & 0xFF); //low byte
 	context.pc = effective_addr;
 }
-uint8_t i_LDA() {
+void i_LDA() {
 	result = cpu_bus_rd(effective_addr);
-	context.a = result;
+	context.a = (uint8_t)result;
 
 	SET_N_FLAG(result);
 	SET_Z_FLAG(result);
 } 
-uint8_t i_LDX() {
+void i_LDX() {
 	result = cpu_bus_rd(effective_addr);
-	context.x = result;
+	context.x = (uint8_t)result;
 
 	SET_N_FLAG(result);
 	SET_Z_FLAG(result);
 }
-uint8_t i_LDY() {
+void i_LDY() {
 	result = cpu_bus_rd(effective_addr);
-	context.y = result;
+	context.y = (uint8_t)result;
 
 	SET_N_FLAG(result);
 	SET_Z_FLAG(result);
 }
-uint8_t i_LSR() {
+void i_LSR() {
 	if (opcode_table[fetched_opcode].addressing_mode == a_ACC) {
 		result = context.a >> 1;
-		context.a = result;
+		context.a = (uint8_t)result;
 	}
 	else {
 		result = fetched_data >> 1;
-		cpu_bus_wr(effective_addr, result);
+		cpu_bus_wr(effective_addr, (uint8_t)result);
 	}
 
 	context.flags = SET_FLAG_OFF(FLAG_N);
 	SET_Z_FLAG(result);
 	SET_C_FLAG(result);
 } 
-uint8_t i_NOP() {
+void i_NOP() {
 
 } 
-uint8_t i_ORA() {
+void i_ORA() {
 	result = fetched_data | context.a;
-	context.a = result;
+	context.a = (uint8_t)result;
 
 	SET_N_FLAG(result);
 	SET_Z_FLAG(result);
 } 
-uint8_t i_PHA() {
+void i_PHA() {
 	STK_PUSH(context.a);
 }
-uint8_t i_PHP() {
+void i_PHP() {
 	STK_PUSH(context.flags);
 } 
-uint8_t i_PLA() {
+void i_PLA() {
 	STK_POP(result);
-	context.a = result;
+	context.a = (uint8_t)result;
 
 	SET_N_FLAG(result);
 	SET_Z_FLAG(result);
 } 
-uint8_t i_PLP() {
+void i_PLP() {
 	STK_POP(result);
-	context.flags = result;
+	context.flags = (uint8_t)result;
 
 	SET_N_FLAG(result);
 	SET_Z_FLAG(result);
 } 
-uint8_t i_ROL() {
+void i_ROL() {
 	if (opcode_table[fetched_opcode].addressing_mode == a_ACC) {
 		result = context.a;
 		result <<= 1;
 		result |= context.flags & FLAG_C;
-		context.a = result;
+		context.a = (uint8_t)result;
 	}
 	else {
 		result = fetched_data;
 		result <<= 1;
 		result |= context.flags & FLAG_C;
-		cpu_bus_wr(effective_addr, result);
+		cpu_bus_wr(effective_addr, (uint8_t)result);
 	}
 
 	SET_N_FLAG(result);
 	SET_Z_FLAG(result);
 	SET_C_FLAG(result);
 }
-uint8_t i_ROR() {
+void i_ROR() {
 	if (opcode_table[fetched_opcode].addressing_mode == a_ACC) {
 		result = context.a;
 		result |= result & 0x1 << 9;
 		result >>= 1;
 		result |= context.flags & FLAG_C << 7;
-		context.a = result;
+		context.a = (uint8_t)result;
 	}
 	else {
 		result = fetched_data;
 		result |= result & 0x1 << 9;
 		result >>= 1;
 		result |= context.flags & FLAG_C << 7;
-		cpu_bus_wr(effective_addr, result);
+		cpu_bus_wr(effective_addr, (uint8_t)result);
 	}
 
 	SET_N_FLAG(result);
 	SET_Z_FLAG(result);
 	SET_C_FLAG(result);
 } 
-uint8_t i_RTI() {
+void i_RTI() {
 	assert(!"not implemented");
 } 
-uint8_t i_RTS() {
+void i_RTS() {
 	assert(!"not implemented");
 } 
-uint8_t i_SBC() {
+void i_SBC() {
 	assert(!"not implemented");
 }
-uint8_t i_SEC() {
+void i_SEC() {
 	context.flags = SET_FLAG_ON(FLAG_C);
 } 
-uint8_t i_SED() {
+void i_SED() {
 	context.flags = SET_FLAG_ON(FLAG_D);
 } 
-uint8_t i_SEI() {
+void i_SEI() {
 	context.flags = SET_FLAG_ON(FLAG_I);
 } 
-uint8_t i_STA() {
+void i_STA() {
 	cpu_bus_wr(effective_addr, context.a);
 }
-uint8_t i_STX() {
+void i_STX() {
 	cpu_bus_wr(effective_addr, context.x);
 } 
-uint8_t i_STY() {
+void i_STY() {
 	cpu_bus_wr(effective_addr, context.y);
 } 
-uint8_t i_TAX() {
+void i_TAX() {
 	context.x = context.a;
 
 	SET_N_FLAG(context.x);
 	SET_Z_FLAG(context.x);
 } 
-uint8_t i_TAY() {
+void i_TAY() {
 	context.y = context.a;
 
 	SET_N_FLAG(context.y);
 	SET_Z_FLAG(context.y);
 }
-uint8_t i_TSX() {
+void i_TSX() {
 	context.x = context.sp;
 
 	SET_N_FLAG(context.x);
 	SET_Z_FLAG(context.x);
 } 
-uint8_t i_TXA() {
+void i_TXA() {
 	context.a = context.x;
 
 	SET_N_FLAG(context.a);
 	SET_Z_FLAG(context.a);
 } 
-uint8_t i_TXS() {
+void i_TXS() {
 	context.sp = context.x;
 } 
-uint8_t i_TYA() {
+void i_TYA() {
 	context.a = context.y;
 
 	SET_N_FLAG(context.a);
 	SET_Z_FLAG(context.a);
+}
+
+void x_XXX()
+{
+
 }
