@@ -88,10 +88,13 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>F:\SFML-2.5.1\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>F:\SFML-2.5.1\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>sfml-graphics-d.lib;sfml-window-d.lib;sfml-system-d.lib;sfml-network-d.lib;sfml-audio-d.lib;;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -141,12 +144,17 @@
   <ItemGroup>
     <ClInclude Include="..\include\cpu.h" />
     <ClInclude Include="..\include\cpu_bus.h" />
+    <ClInclude Include="..\include\ppu.h" />
+    <ClInclude Include="..\include\ppu_bus.h" />
     <ClInclude Include="..\include\ram.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\cpu.c" />
     <ClCompile Include="..\src\cpu_bus.c" />
+    <ClCompile Include="..\src\ppu.c" />
+    <ClCompile Include="..\src\ppu_bus.c" />
     <ClCompile Include="..\src\ram.c" />
+    <ClCompile Include="..\src\SFML\display.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

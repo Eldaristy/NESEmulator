@@ -10,7 +10,7 @@
 #define	NAMETABLE_SIZE 0x400
 #define PALETTES_INDEXES_SIZE 0x20
 
-//address where each harware component section access starts
+//address where each hardware component section access starts
 
 
 uint8_t ppu_bus_rd(uint16_t); //read a byte from ppu bus
