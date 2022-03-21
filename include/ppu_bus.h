@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <assert.h>
 #include "ram.h"
+#include "ppu.h"
 
 //size of each hardware component the ppu bus can access
 #define PATTERN_TABLE_SIZE 0x1000

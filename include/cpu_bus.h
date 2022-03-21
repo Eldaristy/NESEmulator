@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <assert.h>
 #include "ram.h"
+#include "ppu.h"
 
 //size of each hardware component the cpu bus can access
 #define CPU_RAM_SIZE 0x800

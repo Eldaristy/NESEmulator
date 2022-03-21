@@ -71,7 +71,11 @@ void a_IND()
 }
 void a_INY() 
 {
-	assert(!"not implemented");
+	effective_addr = cpu_bus_rd(context.pc + 1);
+	effective_addr += cpu_bus_rd(context.pc + 2) << 8;
+	effective_addr = cpu_bus_rd(effective_addr);
+	effective_addr += context.y;
+	fetched_data = 0;
 }
 void a_XND()
 {
@@ -83,7 +87,9 @@ void a_XND()
 }
 void a_REL()
 {
-	assert(!"not implemented");
+	effective_addr = context.pc;
+	effective_addr += (int8_t)cpu_bus_rd(context.pc + 1);
+	fetched_data = 0;
 }
 void a_ZPG() 
 {

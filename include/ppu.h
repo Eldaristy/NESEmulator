@@ -14,6 +14,8 @@
 #define PPUDATA 0x2007;
 #define OAMDMA 0x4014;
 
-static uint8_t pallete[][3];
+uint8_t ppu_regs[8];
+
+static uint8_t pallete[0x40][3];
 
 #endif

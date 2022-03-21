@@ -7,7 +7,7 @@ uint8_t cpu_bus_rd(uint16_t addr)
 		read_data = cpu_ram[addr & (CPU_RAM_SIZE - 1)];
 	}
 	else if (addr < APU_IO_REGS_START) { //ppu registers
-		assert(!"not implemented");
+		read_data = ppu_regs[addr - PPU_REGS_START];
 	} 
 	else if (addr < DISABLED_APU_IO_START) { //apu and io registers
 		assert(!"not implemented");
@@ -26,7 +26,7 @@ void cpu_bus_wr(uint16_t addr, uint8_t val)
 		cpu_ram[addr & (CPU_RAM_SIZE - 1)] = val;
 	}
 	else if (addr < APU_IO_REGS_START) { //ppu registers
-		assert(!"not implemented");
+		ppu_regs[addr - PPU_REGS_START] = val;
 	}
 	else if (addr < DISABLED_APU_IO_START) { //apu and io registers
 		assert(!"not implemented");

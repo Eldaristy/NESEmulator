@@ -30,6 +30,9 @@
     <ClInclude Include="..\include\ppu_bus.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\multimedia\display.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\cpu.c">
@@ -47,7 +50,10 @@
     <ClCompile Include="..\src\ppu_bus.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\SFML\display.cpp">
+    <ClCompile Include="..\src\main.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\multimedia\display.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
