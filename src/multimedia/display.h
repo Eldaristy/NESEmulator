@@ -1,10 +1,12 @@
 #ifndef DISPLAY_H
 #define DISPLAY_H
 
-#include <SFML/Window.h>
+#include <allegro5/allegro.h>
+#include <stdint.h>
 
-#define WINDOW_SCALE 3
+#define WINDOW_SCALE 1
 
-int display();
-
+void create_window();
+void set_pixel(uint8_t, uint8_t, uint8_t[3]);
+void draw_noise(const int*);
 #endif

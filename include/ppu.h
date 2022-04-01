@@ -91,4 +91,6 @@ union PPUDATA { //Access: write x2
 } ppudata;
 
 void gen_nmi();
+void cycle();
+void render();
 #endif

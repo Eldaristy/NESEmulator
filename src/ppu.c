@@ -59,7 +59,12 @@ uint8_t pallete[0x40][3] = {
 	{160, 162, 160},
 };
 
-void test()
+void render()
+{
+
+}
+
+void cycle()
 {
 	
 }
