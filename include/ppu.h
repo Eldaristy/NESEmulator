@@ -15,6 +15,8 @@
 //#define PPUDATA 0x2007;
 //#define OAMDMA 0x4014;
 
+static uint8_t pattern_tables[0x1000][2];
+
 //PPU internal registers - "Loopy" registers
 
 //vram_addr and temp_vram_addr - 15 bits long
@@ -32,13 +34,20 @@ union {
 uint8_t fine_x_scroll; //3 bits long
 uint8_t addr_latch; //1 bit long
 
+//shift registers used for background rendering:
+static uint16_t patt_tbl_data[2];
+static uint8_t pall_attr_data[2];
+
+//shift registers used for sprite rendering:
+
+
 union PPUCTRL{ //Access: write
 	struct {
 		uint8_t nametable_x : 1;
 		uint8_t nametable_y : 1;
 		uint8_t increment_mode : 1;
-		uint8_t spr_patterntable : 1;
-		uint8_t bkg_nametable_y : 1;
+		uint8_t spr_pattern_table : 1;
+		uint8_t bkg_pattern_table : 1;
 		uint8_t spr_size : 1;
 		uint8_t master_slave : 1;
 		uint8_t gen_nmi : 1;
@@ -93,4 +102,19 @@ union PPUDATA { //Access: write x2
 void gen_nmi();
 void cycle();
 void render();
+
+static uint16_t dot;
+static uint16_t scanlines;
+
+//latches used when fetching data for background rendering
+static uint8_t patt_tbl_id;
+static uint8_t attr_tbl_id;
+static uint8_t patt_tbl_lo;
+static uint8_t patt_tbl_hi;
+
+#define IDLE_CYCLE (dot == 0)
+#define VISIBLE_CYCLE (dot >= 1 && dot <= 256)
+#define INVISIBLE_CYCLE (dot > 257 && dot <= 320)
+
+#define PRE_RENDER_SCL (scanlines == -1)
 #endif
