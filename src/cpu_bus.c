@@ -93,6 +93,7 @@ void cpu_bus_wr(uint16_t addr, uint8_t val)
 
 		case 0x2004: //OAMDATA
 			oamdata.reg = val;
+			oam[oamaddr.reg] = oamdata.reg;
 			break;
 
 		case 0x2005: //PPUSCROLL
@@ -131,7 +132,11 @@ void cpu_bus_wr(uint16_t addr, uint8_t val)
 			break;
 
 		case 0x4014: //OAMDMA
-			assert(!"not implemented");
+			oamdma.reg = val;
+			for (uint16_t i = 0; i < 0x100; i++) {
+				oam[i] = cpu_bus_rd((uint16_t)(oamdma.reg) << 8 + i);
+			}
+			break;
 		}
 	}
 	else if (addr < DISABLED_APU_IO_START) { //apu and io registers

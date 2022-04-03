@@ -15,6 +15,8 @@
 //#define PPUDATA 0x2007;
 //#define OAMDMA 0x4014;
 
+uint8_t oam[0x100];
+
 static uint8_t pattern_tables[0x1000][2];
 
 //PPU internal registers - "Loopy" registers
@@ -99,9 +101,26 @@ union PPUDATA { //Access: write x2
 		uint8_t reg;
 } ppudata;
 
+union OAMDMA { //Access: write 
+	uint8_t reg;
+} oamdma;
+
 void gen_nmi();
 void cycle();
+
+//all scanline stages:
+void pre_render();
 void render();
+void post_render();
+void vertical_blank();
+
+//all rendering stages (cycles inside render()):
+//"void idle()"
+void fetch_data();
+void evaluate_sprites(); //a process which is taken beside the one of fetch_data()
+void fetch_next_scl_sprites();
+void fetch_next_scl_tiles();
+//"void do_nothing()"
 
 static uint16_t dot;
 static uint16_t scanlines;
@@ -112,9 +131,18 @@ static uint8_t attr_tbl_id;
 static uint8_t patt_tbl_lo;
 static uint8_t patt_tbl_hi;
 
+//background shift registers
+static uint16_t bkg_patt_shift[2];
+static uint8_t bkg_attr_shift[2];
+
+//sprite shift registers
+
+
 #define IDLE_CYCLE (dot == 0)
 #define VISIBLE_CYCLE (dot >= 1 && dot <= 256)
 #define INVISIBLE_CYCLE (dot > 257 && dot <= 320)
 
 #define PRE_RENDER_SCL (scanlines == -1)
+
+
 #endif

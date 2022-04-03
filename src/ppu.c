@@ -61,77 +61,103 @@ uint8_t pallete[0x40][3] = {
 	{160, 162, 160},
 };
 
+void pre_render();
+
+void fetch_data()
+{
+	switch (dot - 1 % 8) {
+	case 0:
+		//fetch pattern table byte
+		patt_tbl_id = ppu_bus_rd(NAMETABLES_START
+			| (vram_addr.reg & 0x0FFF));
+		break;
+
+	case 2:
+		//fetch attribute table byte
+		attr_tbl_id = ppu_bus_rd(NAMETABLES_START
+			| (NAMETABLE_SIZE - 0x40)
+			| (vram_addr.nametable << 11)
+			| (vram_addr.coarse_y >> 2 << 3)
+			| (vram_addr.coarse_x >> 2));
+		break;
+
+	case 4:
+		patt_tbl_lo = ppu_bus_rd(ppuctrl.bkg_pattern_table << 12
+			| (uint16_t)patt_tbl_id << 4
+			| vram_addr.fine_y_scroll);
+		break;
+
+	case 6:
+		patt_tbl_hi = ppu_bus_rd(ppuctrl.bkg_pattern_table << 12
+			| (uint16_t)patt_tbl_id << 4
+			| vram_addr.fine_y_scroll + 8);
+		break;
+
+	case 7:
+		//increment fine_x_scroll, then check if it wraps around and requires
+		//incrementing coarse_x... then nametable...
+		fine_x_scroll++;
+		if (fine_x_scroll == 8) {
+			fine_x_scroll = 0;
+			vram_addr.coarse_x++;
+		}
+		if (vram_addr.coarse_x == 31) {
+			vram_addr.coarse_x = 0;
+			vram_addr.nametable++;
+		}
+		if (vram_addr.nametable == 3) {
+			vram_addr.nametable = 0;
+		}
+		break;
+	}
+}
+void evaluate_sprites()
+{
+
+}
+void fetch_next_scl_sprites()
+{
+
+}
+void fetch_next_scl_tiles()
+{
+
+}
 void render()
 {
 	if (dot == 0) {
 		//idle cycle
 	} else if (dot <= 256) {
 		//render cycle
-		switch (dot - 1 % 8) {
-			case 0:
-				//fetch pattern table byte
-				patt_tbl_id = ppu_bus_rd(NAMETABLES_START
-					| (vram_addr.reg & 0x0FFF));
-				break;
-
-			case 2:
-				//fetch attribute table byte
-				attr_tbl_id = ppu_bus_rd(NAMETABLES_START
-					| (NAMETABLE_SIZE - 0x40)
-					| (vram_addr.nametable << 11)
-					| (vram_addr.coarse_y >> 2 << 3)
-					| (vram_addr.coarse_x >> 2));
-				break;
-
-			case 4:
-				patt_tbl_lo = ppu_bus_rd(ppuctrl.bkg_pattern_table << 12
-					| (uint16_t)patt_tbl_id << 4
-					| vram_addr.fine_y_scroll);
-				break;
-
-			case 6:
-				patt_tbl_hi = ppu_bus_rd(ppuctrl.bkg_pattern_table << 12
-					| (uint16_t)patt_tbl_id << 4
-					| vram_addr.fine_y_scroll + 8);
-				break;
-
-			case 7:
-				//increment fine_x_scroll, then check if it wraps around and requires
-				//incrementing coarse_x... then nametable...
-				fine_x_scroll++;
-				if (fine_x_scroll == 8) {
-					fine_x_scroll = 0;
-					vram_addr.coarse_x++;
-				}
-				if (vram_addr.coarse_x == 31) {
-					vram_addr.coarse_x = 0;
-					vram_addr.nametable++;
-				}
-				if (vram_addr.nametable == 3) {
-					vram_addr.nametable = 0;
-				}
-				fine_x_scroll = (fine_x_scroll == 8) ? 0 : fine_x_scroll;
-		}
-			
-
-		
+		fetch_data();
+		evaluate_sprites();
 	} else if (dot <= 320) {
 		//fetch data for sprites in next scanline
-	}
-	else if (dot <= 336) {
+		fetch_next_scl_sprites();
+	} else if (dot <= 336) {
 		//fetch data for first 2 tiles in next scanline
-	}
-	else {
+		fetch_next_scl_tiles();
+	} else {
 		//do nothing
 	}
 	dot++;
 	dot = (dot == 341) ? 0 : dot;
 }
 
+void post_render()
+{
+
+}
+void vertical_blank()
+{
+
+}
+
 void cycle()
 {
 	if (scanlines == -1) {
 		//dummy
+		pre_render();
 	}
 	else if (scanlines <= 239) {
 		//visible scanlines
@@ -139,9 +165,11 @@ void cycle()
 	}
 	else if (scanlines == 240) {
 		//post-render
+		post_render();
 	}
 	else { // 241-260
 		//vertical blank
+		vertical_blank();
 	}
 	scanlines++;
 	scanlines = (scanlines == 261) ? -1 : scanlines;
