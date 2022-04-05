@@ -2,7 +2,7 @@
 
 static uint8_t pattern_tables[0x1000][2] = {0};
 
-uint8_t pallete[0x40][3] = {
+uint8_t colors[0x40][3] = {
 	{84, 84, 84},
 	{0, 30, 116},
 	{8, 16, 144},
@@ -61,12 +61,49 @@ uint8_t pallete[0x40][3] = {
 	{160, 162, 160},
 };
 
-void pre_render();
+void load_bkg_shifts()
+{
+	uint8_t mod_coarse_x = vram_addr.coarse_x % 4;
+	uint8_t mod_coarse_y = vram_addr.coarse_y % 4;
+	
+	bkg_patt_shift_lo = bkg_patt_shift_lo & 0xFF | (uint16_t)(patt_tbl_lo) << 8;
+	bkg_patt_shift_hi = bkg_patt_shift_hi & 0xFF | (uint16_t)(patt_tbl_hi) << 8;
 
-void fetch_data()
+	if (mod_coarse_y <= 1) { //top
+		if (mod_coarse_x <= 1) { //top-left
+			bkg_attr_shift_lo = attr_tbl_id & 0x01;
+			bkg_attr_shift_hi = attr_tbl_id & 0x02;
+		} else { //top-right
+			bkg_attr_shift_lo = attr_tbl_id & 0x04;
+			bkg_attr_shift_hi = attr_tbl_id & 0x08;
+		}
+	} else { //bottom
+		if (mod_coarse_x <= 1) { //bottom-left
+			bkg_attr_shift_lo = attr_tbl_id & 0x10;
+			bkg_attr_shift_hi = attr_tbl_id & 0x20;
+		}
+		else { //bottom-right
+			bkg_attr_shift_lo = attr_tbl_id & 0x40;
+			bkg_attr_shift_hi = attr_tbl_id & 0x80;
+		}
+	}
+}
+void load_spr_shifts()
+{
+
+}
+
+void pre_render()
+{
+
+}
+
+void fetch_next_scl_bkground()
 {
 	switch (dot - 1 % 8) {
 	case 0:
+		load_bkg_shifts();
+
 		//fetch pattern table byte
 		patt_tbl_id = ppu_bus_rd(NAMETABLES_START
 			| (vram_addr.reg & 0x0FFF));
@@ -77,7 +114,7 @@ void fetch_data()
 		attr_tbl_id = ppu_bus_rd(NAMETABLES_START
 			| (NAMETABLE_SIZE - 0x40)
 			| (vram_addr.nametable << 11)
-			| (vram_addr.coarse_y >> 2 << 3)
+			| ((vram_addr.coarse_y >> 2) << 3)
 			| (vram_addr.coarse_x >> 2));
 		break;
 
@@ -113,15 +150,95 @@ void fetch_data()
 }
 void evaluate_sprites()
 {
+	if (dot >= 1 && dot <= 64) {
+		oam_counter = 0;
+		for (uint8_t i = 0; i < 8; i++) {
+			secondary_oam[i] = (sprite){ 0xFF, 0xFF, 0xFF, 0xFF };
+		}
+	} else if (dot <= 256) {
+		switch (dot % 2) {
+		case 1:
+			oam_temp = primary_oam[oam_counter];
+			break;
+		
+		case 0:
+			if (oam_counter < 8) {
+				secondary_oam[oam_counter] = oam_temp; //here I simplified a little bit...
+				//instead of copying just the first byte of the sprite then check if I
+				//have to copy all the rest and increment oam_counter, I decided to
+				//copy all 4 bytes from the start and decide whether or not to increment oam_counter
+				
+			} else {
+				oam_temp = secondary_oam[7];
+			}
+		}
+	} else if (dot <= 320) {
+		oam_counter = 0;
+	}
+}
+void create_pixel()
+{
+	uint8_t bkg_pixel = 0;
+	palette bkg_palette = 0;
+	uint8_t spr_pixel = 0; 
+	palette spr_palette = 0;
+	uint8_t final_pixel = 0;
+	palette final_palette = 0;
 
+	bkg_pixel = (bkg_patt_shift_lo & 0x0001) | (bkg_patt_shift_hi & 0x0001 << 1);
+	bkg_palette = (bkg_attr_shift_lo & 0x01) | (bkg_attr_shift_hi & 0x01 << 1);
+	bkg_palette = palette_ram[bkg_palette];
+	
+	spr_pixel = 0; //not implemented yet...
+	spr_palette = palette_ram[secondary_oam[current_spr_index].attr.palette + 4];
+
+	if (bkg_pixel == 0 && spr_pixel == 0) {
+		final_pixel = bkg_pixel;
+		//final_palette doesn't matter because it's background color anyways
+	} else if (bkg_pixel == 0 && spr_pixel > 0) {
+		final_pixel = spr_pixel;
+		final_palette = spr_palette;
+	} else if (bkg_pixel > 0 && spr_pixel == 0) {
+		final_pixel = bkg_pixel;
+		final_palette = bkg_palette;
+	} else {
+		if (secondary_oam[current_spr_index].attr.priority) {
+			final_pixel = bkg_pixel;
+			final_palette = bkg_palette;
+		} else {
+			final_pixel = spr_pixel;
+			final_palette = spr_palette;
+		}
+	}
+
+	set_pixel(dot - 1, scanline, colors[((uint8_t*)palette_ram)[final_palette * 4 + final_pixel]]);
 }
 void fetch_next_scl_sprites()
 {
+	//here the structure is very similar to the one of fetch_next_scl_bkground(), but even simpler
+	switch (dot - 1 % 8) {
+	case 0:
+		load_spr_shifts();
 
-}
-void fetch_next_scl_tiles()
-{
+		//fetch garbage data
+		break;
 
+	case 2:
+		//fetch garbage data
+		break;
+
+	case 4:
+		spr_patt_shift_lo[oam_counter] = ppu_bus_rd(ppuctrl.spr_pattern_table << 12
+			| (uint16_t)(secondary_oam[oam_counter].tile_index) << 4
+			| scanline - secondary_oam[oam_counter].y_top);
+		break;
+
+	case 6:
+		spr_patt_shift_lo[oam_counter] = ppu_bus_rd(ppuctrl.spr_pattern_table << 12
+			| (uint16_t)(secondary_oam[oam_counter].tile_index) << 4
+			| scanline - secondary_oam[oam_counter].y_top + 8);
+		break;
+	}
 }
 void render()
 {
@@ -129,17 +246,27 @@ void render()
 		//idle cycle
 	} else if (dot <= 256) {
 		//render cycle
-		fetch_data();
-		evaluate_sprites();
+		fetch_next_scl_bkground();
+		create_pixel();
+
+		//now for the reason they are called SHIFT registers...
+		bkg_patt_shift_lo >>= 1;
+		bkg_patt_shift_hi >>= 1;
 	} else if (dot <= 320) {
 		//fetch data for sprites in next scanline
 		fetch_next_scl_sprites();
 	} else if (dot <= 336) {
 		//fetch data for first 2 tiles in next scanline
-		fetch_next_scl_tiles();
+		fetch_next_scl_bkground();
+
+		bkg_patt_shift_lo >>= 1;
+		bkg_patt_shift_hi >>= 1;
 	} else {
-		//do nothing
+		//do nothing (purpose of cycles 337-340 are unknown and probably not impactful)
 	}
+
+	
+
 	dot++;
 	dot = (dot == 341) ? 0 : dot;
 }
@@ -148,6 +275,7 @@ void post_render()
 {
 
 }
+
 void vertical_blank()
 {
 
@@ -155,15 +283,16 @@ void vertical_blank()
 
 void cycle()
 {
-	if (scanlines == -1) {
+	if (scanline == -1) {
 		//dummy
 		pre_render();
 	}
-	else if (scanlines <= 239) {
-		//visible scanlines
+	else if (scanline <= 239) {
+		//visible scanline
+		evaluate_sprites();
 		render();
 	}
-	else if (scanlines == 240) {
+	else if (scanline == 240) {
 		//post-render
 		post_render();
 	}
@@ -171,7 +300,7 @@ void cycle()
 		//vertical blank
 		vertical_blank();
 	}
-	scanlines++;
-	scanlines = (scanlines == 261) ? -1 : scanlines;
+	scanline++;
+	scanline = (scanline == 261) ? -1 : scanline;
 }
 
