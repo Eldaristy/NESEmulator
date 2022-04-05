@@ -9,5 +9,9 @@ void create_window(const int* pixels)
 	al_flip_display();
 	return 0;
 }	
+void set_pixel()
+{
+
+}
 
 

@@ -104,6 +104,8 @@ void evaluate_sprites(); //a process which is taken beside the one of fetch_next
 void fetch_next_scl_sprites();
 //"void do_nothing()"
 
+void create_pixel();
+
 static uint16_t dot;
 static uint16_t scanline;
 
@@ -158,7 +160,6 @@ static uint8_t spr_patt_shift_lo[8];
 static uint8_t spr_patt_shift_hi[8];
 
 static uint8_t current_spr_index;
-static void create_pixel();
 
 #define IDLE_CYCLE (dot == 0)
 #define VISIBLE_CYCLE (dot >= 1 && dot <= 256)

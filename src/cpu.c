@@ -28,17 +28,20 @@ uint8_t run_clock()
 	while(1) {
 		fetched_opcode = cpu_bus_rd(context.pc);
 		opcode_table[fetched_opcode].addressing_mode();
+		opcode_table[fetched_opcode].instruction();
 	}
 }
 void a_ACC()
 {
 	fetched_data = context.a;
+	context.pc++;
 }
 void a_ABS()
 {
 	effective_addr = cpu_bus_rd(context.pc + 1); //low byte read from lower address
 	effective_addr += cpu_bus_rd(context.pc + 2) << 8; //high byte read from higher address
 	fetched_data = cpu_bus_rd(effective_addr);
+	context.pc += 3;
 }
 void a_ABX()
 {
@@ -46,6 +49,7 @@ void a_ABX()
 	effective_addr += cpu_bus_rd(context.pc + 2) << 8; //high byte read from higher address
 	effective_addr += context.x;
 	fetched_data = cpu_bus_rd(effective_addr);
+	context.pc += 3;
 }
 void a_ABY()
 {
@@ -53,14 +57,17 @@ void a_ABY()
 	effective_addr += cpu_bus_rd(context.pc + 2) << 8; //high byte read from higher address
 	effective_addr += context.y;
 	fetched_data = cpu_bus_rd(effective_addr);
+	context.pc += 3;
 }
 void a_IMM()
 {
 	effective_addr = context.pc + 1;
 	fetched_data = cpu_bus_rd(effective_addr);
+	context.pc += 2;
 }
 void a_IMP()
 {
+	context.pc++;
 }
 void a_IND() 
 {
@@ -68,6 +75,7 @@ void a_IND()
 	effective_addr += cpu_bus_rd(context.pc + 2) << 8;
 	effective_addr = cpu_bus_rd(effective_addr);
 	fetched_data = 0;
+	context.pc += 3;
 }
 void a_INY() 
 {
@@ -76,6 +84,7 @@ void a_INY()
 	effective_addr = cpu_bus_rd(effective_addr);
 	effective_addr += context.y;
 	fetched_data = 0;
+	context.pc += 3;
 }
 void a_XND()
 {
@@ -84,17 +93,20 @@ void a_XND()
 	effective_addr += cpu_bus_rd((effective_addr + 1) & 0xFF) << 8; //emulate the 0xFF wrapping around bug
 	effective_addr = cpu_bus_rd(effective_addr);
 	fetched_data = 0;
+	context.pc += 2;
 }
 void a_REL()
 {
 	effective_addr = context.pc;
 	effective_addr += (int8_t)cpu_bus_rd(context.pc + 1);
 	fetched_data = 0;
+	context.pc += 2;
 }
 void a_ZPG() 
 {
 	effective_addr = cpu_bus_rd(context.pc + 1);
 	fetched_data = cpu_bus_rd(effective_addr);
+	context.pc += 2;
 }
 void a_ZPX() 
 {
@@ -103,6 +115,7 @@ void a_ZPX()
 	effective_addr += context.x;
 	effective_addr &= 0xFF;
 	fetched_data = cpu_bus_rd(effective_addr);
+	context.pc += 2;
 }
 void a_ZPY()
 {
@@ -111,6 +124,7 @@ void a_ZPY()
 	effective_addr += context.y;
 	effective_addr &= 0xFF;
 	fetched_data = cpu_bus_rd(effective_addr);
+	context.pc += 2;
 }
 
 //instructions

@@ -95,7 +95,15 @@ void load_spr_shifts()
 
 void pre_render()
 {
+	if (dot == 0) {
+		ppustatus.vblank = 1;
+	} else if (dot >= 321 && dot <= 336) {
+	//fetch data for first 2 tiles in next scanline
+	fetch_next_scl_bkground();
 
+	bkg_patt_shift_lo >>= 1;
+	bkg_patt_shift_hi >>= 1;
+	}
 }
 
 void fetch_next_scl_bkground()
@@ -278,7 +286,12 @@ void post_render()
 
 void vertical_blank()
 {
-
+	if (dot == 1) {
+		ppustatus.vblank = 1;
+		if (ppuctrl.gen_nmi) {
+			gen_nmi();
+		}
+	}
 }
 
 void cycle()
