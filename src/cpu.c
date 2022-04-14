@@ -200,8 +200,18 @@ void i_BPL() {
 	}
 }
 void i_BRK() {
-	assert(!"not implemented");
-	context.flags = SET_FLAG_ON(FLAG_I);
+	if (!(context.flags & FLAG_I)) { //I flag disables any interrupt except for NMI
+		context.pc++; //ALWAYS THERE'S A PADDING BYTE AFTER THE OPCODE
+
+		STK_PUSH(context.pc);
+		STK_PUSH(context.flags | FLAG_B);
+		
+		context.pc = (uint16_t)cpu_bus_rd(0xFFFE) 
+			| ((uint16_t)cpu_bus_rd(0xFFFF) << 8); //IRQ/BRK vector
+
+		context.flags = SET_FLAG_ON(FLAG_I);
+	}
+	
 }
 void i_BVC() {
 	if (!(context.flags & FLAG_V)) {
@@ -404,13 +414,24 @@ void i_ROR() {
 	SET_C_FLAG(result);
 } 
 void i_RTI() {
-	assert(!"not implemented");
+	STK_POP(context.flags);
+	STK_POP((uint8_t)result); //low byte
+	STK_POP((uint8_t)context.pc); //high byte
+	context.pc = result | (context.pc << 8);
 } 
 void i_RTS() {
-	assert(!"not implemented");
+	STK_POP((uint8_t)result); //low byte
+	STK_POP((uint8_t)context.pc); //high byte
+	context.pc = result | (context.pc << 8);
 } 
 void i_SBC() {
-	assert(!"not implemented");
+	result = ~(fetched_data + (context.flags & FLAG_C));
+	context.a += result;
+
+	SET_N_FLAG(result);
+	SET_Z_FLAG(result);
+	SET_C_FLAG(result);
+	SET_V_FLAG(result);
 }
 void i_SEC() {
 	context.flags = SET_FLAG_ON(FLAG_C);
