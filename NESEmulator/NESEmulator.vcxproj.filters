@@ -21,9 +21,6 @@
     <ClInclude Include="..\include\cpu_bus.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\ram.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\ppu.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -33,15 +30,18 @@
     <ClInclude Include="..\src\multimedia\display.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\cartidge.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\mappers\mapper000.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\cpu.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\cpu_bus.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\ram.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\ppu.c">
@@ -54,6 +54,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\multimedia\display.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\cartidge.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\mappers\mapper000.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

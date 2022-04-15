@@ -18,10 +18,8 @@
 
 static uint8_t colors[0x40][3];
 
-static uint8_t pattern_tables[0x1000][2];
-
-typedef uint32_t palette;
-static palette palette_ram[0x8];
+//typedef uint32_t palette;
+uint8_t palette_ram[0x20];
 
 union PPUCTRL{ //Access: write
 	struct {

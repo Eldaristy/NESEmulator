@@ -1,7 +1,5 @@
 #include "../include/ppu.h"
 
-static uint8_t pattern_tables[0x1000][2] = {0};
-
 uint8_t colors[0x40][3] = {
 	{84, 84, 84},
 	{0, 30, 116},
@@ -158,6 +156,7 @@ void fetch_next_scl_bkground()
 }
 void evaluate_sprites()
 {
+	assert(!"not implemented");
 	if (dot >= 1 && dot <= 64) {
 		oam_counter = 0;
 		for (uint8_t i = 0; i < 8; i++) {
@@ -187,11 +186,11 @@ void evaluate_sprites()
 void create_pixel()
 {
 	uint8_t bkg_pixel = 0;
-	palette bkg_palette = 0;
+	uint8_t bkg_palette = 0;
 	uint8_t spr_pixel = 0; 
-	palette spr_palette = 0;
+	uint8_t spr_palette = 0;
 	uint8_t final_pixel = 0;
-	palette final_palette = 0;
+	uint8_t final_palette = 0;
 
 	bkg_pixel = (bkg_patt_shift_lo & 0x0001) | (bkg_patt_shift_hi & 0x0001 << 1);
 	bkg_palette = (bkg_attr_shift_lo & 0x01) | (bkg_attr_shift_hi & 0x01 << 1);

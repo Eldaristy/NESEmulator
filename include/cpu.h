@@ -6,7 +6,10 @@
 
 static uint8_t set_flags(uint16_t); //recieves uint16_t and not uint8_t in order to handle 8-bit overflows 
 
+//hardware interrupts
+static void reset();
 static void nmi();
+static void irq();
 
 /*
 The context of the 6502 microprocessor - all of its registers

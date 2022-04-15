@@ -1,5 +1,7 @@
 #include "../include/cpu_bus.h"
 
+uint8_t cpu_ram[CPU_RAM_SIZE] = { 0xa9, 0xc0, 0xaa, 0xe8, 0x69, 0xc4, 0x00 };
+
 void gen_nmi() 
 {
 	assert(!"not implemented");
@@ -49,18 +51,19 @@ uint8_t cpu_bus_rd(uint16_t addr)
 			break;
 
 		case 0x4014: //OAMDMA
-			assert(!"not implemented");
+			read_data = addr_latch;
+			break;
 		}
 
 	} 
 	else if (addr < DISABLED_APU_IO_START) { //apu and io registers
 		assert(!"not implemented");
 	}
-	else if (addr < CARTIDGE_SPACE_START) { //disabeld apu and io registers
+	else if (addr < CARTIDGE_SPACE_START) { //disabled apu and io registers
 		assert(!"not implemented");
 	}
 	else { //cartidge space
-		assert(!"not implemented");
+		read_data = used_mapper.cpu_rd(addr);
 	}
 	return read_data;
 } 
@@ -146,6 +149,6 @@ void cpu_bus_wr(uint16_t addr, uint8_t val)
 		assert(!"not implemented");
 	}
 	else { //cartidge space
-		assert(!"not implemented");
+		used_mapper.cpu_wr(addr, val);
 	}
 }

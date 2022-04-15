@@ -19,12 +19,58 @@ opcode opcode_table[0x100] = {
 	{i_BEQ,a_REL}, {i_SBC,a_INY}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {i_SBC,a_ZPX}, {i_INC,a_ZPX}, {x_XXX,x_XXX}, {i_SED,a_IMP}, {i_SBC,a_ABY}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {i_SBC,a_ABX}, {i_INC,a_ABX}, {x_XXX,x_XXX}
 };
 
+static void reset()
+{
+	//technically it's set to 0x00 and then the return address and status
+	//registers are pushed, but these are read cycles so it's ignored.
+	//there are 3 pushes to the stack and that's why I set it to 0xFD.
+	context.sp = 0xFD; 
+
+	context.pc = (uint16_t)cpu_bus_rd(0xFFFC)
+		| ((uint16_t)cpu_bus_rd(0xFFFD) << 8); //RESET vector
+	
+}
+
+//does what the BRK instruction does, except for a few differences	
+static void nmi()
+{
+	//1st difference: the I flag doesn't affect its execution (the NMI doesn't care about it)
+	//2nd difference: doesn't increment context.pc
+	STK_PUSH(context.pc >> 8); //high byte
+	STK_PUSH(context.pc & 0xFF); //low byte
+	STK_PUSH(context.flags); //3rd difference: doesn't push the B flag set
+
+	context.pc = (uint16_t)cpu_bus_rd(0xFFFA)
+		| ((uint16_t)cpu_bus_rd(0xFFFB) << 8); //4th difference - NMI vector
+
+	context.flags = SET_FLAG_ON(FLAG_I);
+	
+}
+
+//similar to NMI interrupt and BRK instructions, but with 2 differences to the BRK
+static void irq()
+{
+	if (!(context.flags & FLAG_I)) { //I flag disables any interrupt except for NMI
+		//1st difference: doesn't increment context.pc
+
+		STK_PUSH(context.pc >> 8); //high byte
+		STK_PUSH(context.pc & 0xFF); //low byte
+		STK_PUSH(context.flags); //2nd diffrence - doesn't push the B flag set
+
+		context.pc = (uint16_t)cpu_bus_rd(0xFFFE)
+			| ((uint16_t)cpu_bus_rd(0xFFFF) << 8); //IRQ/BRK vector
+
+		context.flags = SET_FLAG_ON(FLAG_I);
+	}
+}
+
 uint8_t run_clock()
 {
 	effective_addr = 0;
 	fetched_opcode = 0;
 	fetched_data = 0;
 
+	reset();
 	while(1) {
 		fetched_opcode = cpu_bus_rd(context.pc);
 		opcode_table[fetched_opcode].addressing_mode();
@@ -203,7 +249,8 @@ void i_BRK() {
 	if (!(context.flags & FLAG_I)) { //I flag disables any interrupt except for NMI
 		context.pc++; //ALWAYS THERE'S A PADDING BYTE AFTER THE OPCODE
 
-		STK_PUSH(context.pc);
+		STK_PUSH(context.pc >> 8); //high byte
+		STK_PUSH(context.pc & 0xFF); //low byte
 		STK_PUSH(context.flags | FLAG_B);
 		
 		context.pc = (uint16_t)cpu_bus_rd(0xFFFE) 
@@ -211,7 +258,6 @@ void i_BRK() {
 
 		context.flags = SET_FLAG_ON(FLAG_I);
 	}
-	
 }
 void i_BVC() {
 	if (!(context.flags & FLAG_V)) {
