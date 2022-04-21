@@ -15,10 +15,30 @@ int main(int argc, char** argv)
 	}
 
 	parse_file("C:\\Users\\user\\Desktop\\donkey_kong.nes");
+	create_window();
 
+	cpu_init();
+	reset();
 
-	run_clock();
+	ppu_init();
+
+	while (TRUE) {
+		run_clock();
+
+		cycle();
+		cycle();
+		cycle();
+
+		/*printf("%x, A:%x X:%x Y:%x P:%x SP:%x PC:%x\n",
+			fetched_opcode, context.a, context.x, context.y, context.flags, context.sp, context.pc);*/
+
+	}
+
+	/*HANDLE ppu_thread = CreateThread(NULL, NULL, &run_ppu, NULL, NULL, NULL);
+	HANDLE cpu_thread = CreateThread(NULL, NULL, &run_clock, NULL, NULL, NULL);
 	
+	WaitForSingleObject(ppu_thread, INFINITE);*/
+
 /*
 	create_window(cpu_ram);
 	run_clock();

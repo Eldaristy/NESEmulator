@@ -3,7 +3,8 @@
 
 #include <stdint.h>
 #include "ppu_bus.h"
-#include "../src/multimedia/display.h"
+#include "cpu_bus.h"
+#include "../src/multimedia/display.h"	
 
 //ppu registers
 //#define PPUCTRL 0x2000;
@@ -16,10 +17,12 @@
 //#define PPUDATA 0x2007;
 //#define OAMDMA 0x4014;
 
-static uint8_t colors[0x40][3];
+uint8_t colors[0x40][3];
 
 //typedef uint32_t palette;
 uint8_t palette_ram[0x20];
+
+void ppu_init();
 
 union PPUCTRL{ //Access: write
 	struct {
@@ -105,7 +108,7 @@ void fetch_next_scl_sprites();
 void create_pixel();
 
 static uint16_t dot;
-static uint16_t scanline;
+static int16_t scanline;
 
 //PPU internal registers - "Loopy" registers
 
@@ -148,8 +151,9 @@ typedef struct {
 //memory used for storing sprites
 sprite primary_oam[64]; //oam exposed to the cpu via OAMADDR, OAMDATA and OAMDMA registers
 static sprite secondary_oam[8]; //short-term oam
-static uint8_t oam_counter; //referred to "n" in NESdev
-static sprite oam_temp;
+static uint8_t primary_oam_counter; //referred to "n" in NESdev
+static uint8_t secondary_oam_counter; 
+static uint8_t oam_temp;
 //latches used when fetching data for foreground (sprite) rendering
 static uint8_t spr_attrs[8];
 static uint8_t spr_counters[8];
@@ -158,6 +162,8 @@ static uint8_t spr_patt_shift_lo[8];
 static uint8_t spr_patt_shift_hi[8];
 
 static uint8_t current_spr_index;
+
+void run_ppu();
 
 #define IDLE_CYCLE (dot == 0)
 #define VISIBLE_CYCLE (dot >= 1 && dot <= 256)

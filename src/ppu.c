@@ -59,10 +59,46 @@ uint8_t colors[0x40][3] = {
 	{160, 162, 160},
 };
 
+void gen_nmi()
+{
+	nmi_line = 1;
+}
+
+void ppu_init()
+{
+	ppuctrl.reg = 0;
+	ppumask.reg = 0;
+	ppustatus.reg = 0;
+	oamaddr.reg = 0;
+	oamdata.reg = 0;
+	ppuscroll.reg = 0;
+	ppuaddr.reg = 0;
+	ppudata.reg = 0;
+	oamdma.reg = 0;
+
+	dot = 0;
+	scanline = 0;
+
+	vram_addr.reg = 0;
+	temp_vram_addr.reg = 0;
+	fine_x_scroll = 0;
+	addr_latch = 0;
+
+	bkg_patt_shift_lo = 0;
+	bkg_patt_shift_hi = 0;
+	bkg_attr_shift_lo = 0;
+	bkg_attr_shift_hi = 0;
+
+	patt_tbl_id = 0;
+	attr_tbl_id = 0;
+	patt_tbl_lo = 0;
+	patt_tbl_hi = 0;
+}
+
 void load_bkg_shifts()
 {
-	uint8_t mod_coarse_x = vram_addr.coarse_x % 4;
-	uint8_t mod_coarse_y = vram_addr.coarse_y % 4;
+	uint8_t mod_coarse_x = vram_addr.coarse_x & 3; //same as "% 4", just wanted to use bit-wise
+	uint8_t mod_coarse_y = vram_addr.coarse_y & 3;
 	
 	bkg_patt_shift_lo = bkg_patt_shift_lo & 0xFF | (uint16_t)(patt_tbl_lo) << 8;
 	bkg_patt_shift_hi = bkg_patt_shift_hi & 0xFF | (uint16_t)(patt_tbl_hi) << 8;
@@ -156,32 +192,105 @@ void fetch_next_scl_bkground()
 }
 void evaluate_sprites()
 {
-	assert(!"not implemented");
-	if (dot >= 1 && dot <= 64) {
-		oam_counter = 0;
-		for (uint8_t i = 0; i < 8; i++) {
-			secondary_oam[i] = (sprite){ 0xFF, 0xFF, 0xFF, 0xFF };
-		}
-	} else if (dot <= 256) {
-		switch (dot % 2) {
-		case 1:
-			oam_temp = primary_oam[oam_counter];
-			break;
-		
-		case 0:
-			if (oam_counter < 8) {
-				secondary_oam[oam_counter] = oam_temp; //here I simplified a little bit...
-				//instead of copying just the first byte of the sprite then check if I
-				//have to copy all the rest and increment oam_counter, I decided to
-				//copy all 4 bytes from the start and decide whether or not to increment oam_counter
-				
-			} else {
-				oam_temp = secondary_oam[7];
-			}
-		}
-	} else if (dot <= 320) {
-		oam_counter = 0;
+	assert("not implemented");
+
+	int8_t diff = 0;
+	primary_oam_counter = 0;
+	secondary_oam_counter = 0;
+
+	for (uint8_t i = 0; i < 8; i++) {
+		secondary_oam[i] = (sprite){ 0xFF, 0xFF, 0xFF, 0xFF };
 	}
+
+	while (primary_oam_counter / 4 < 64 && secondary_oam_counter / 4 < 8) {
+		secondary_oam[secondary_oam_counter / 4] = primary_oam[primary_oam_counter / 4];
+		diff = scanline - secondary_oam[secondary_oam_counter * 4].y_top;
+		if ((diff >= 0 && diff < 8 && !ppuctrl.spr_size)
+			| (diff >= 0 && diff < 16 && ppuctrl.spr_size)) {
+			secondary_oam_counter += 4;
+		}
+
+		primary_oam_counter += 4;
+	}
+
+	//int8_t diff = 0;
+
+	//assert(!"not implemented");
+	//if (dot >= 1 && dot <= 64) {
+	//	for (uint8_t i = 0; i < 8; i++) {
+	//		secondary_oam[i] = (sprite){ 0xFF, 0xFF, 0xFF, 0xFF };
+	//	}
+	//} else if (dot <= 256) {
+	//	switch (dot % 2) {
+	//	case 1:
+	//		if (secondary_oam_counter / 4 < 8) {
+	//			oam_temp = ((uint8_t*)primary_oam)[primary_oam_counter];
+	//			break;
+	//		} //else - "disable" writing to secondary_oam by simply not reading anything
+	//			//so it writes the last value written to secondary_oam.
+	//		
+	//	
+	//	case 0:
+	//		//"1"
+	//		if (dot == 66) {
+	//			primary_oam_counter = 0; //initialize primary_oam_counter
+	//		}
+	//		if (primary_oam_counter % 4) {
+	//			((uint8_t*)secondary_oam)[secondary_oam_counter] = oam_temp;
+	//			primary_oam_counter++;
+	//			secondary_oam_counter++;
+
+	//			return;
+	//		}
+
+	//		((uint8_t*)secondary_oam)[secondary_oam_counter] = oam_temp; 
+
+	//		//+1 because next scanline
+	//		diff = scanline + 1 - secondary_oam[secondary_oam_counter * 4].y_top; 
+	//		
+	//		//check if sprite in range (y axis)
+	//		if ((diff >= 0 && diff < 8 && !ppuctrl.spr_size)
+	//			| (diff >= 0 && diff < 16 && ppuctrl.spr_size)) {
+	//			primary_oam_counter++;
+	//			secondary_oam_counter++;
+
+	//			return;
+	//		}
+	//		
+	//		//"2"
+	//		if (primary_oam_counter * 4 == 63) //all sprites evaluated
+	//		{
+	//			primary_oam_counter += 4; 
+	//			//4
+	//		} else {
+	//			primary_oam_counter += 4; //advance to the next sprite in primary_oam
+	//			if (secondary_oam_counter / 4 < 8) {
+	//				return;
+	//			}
+
+	//			//3
+
+	//		}
+	//		
+
+
+	//		if (1) {
+
+	//		} else if (secondary_oam_counter < 8) {
+	//			
+	//		} else { //secondary_oam_counter == 8
+
+	//		}
+
+	//		oam_temp = secondary_oam[7]; //"ignore" the write
+	//		
+
+	//		//"2"
+	//		primary_oam_counter++;
+	//	}
+	//} else if (dot <= 320) {
+	//	primary_oam_counter = 0;
+	//}
 }
 void create_pixel()
 {
@@ -194,10 +303,9 @@ void create_pixel()
 
 	bkg_pixel = (bkg_patt_shift_lo & 0x0001) | (bkg_patt_shift_hi & 0x0001 << 1);
 	bkg_palette = (bkg_attr_shift_lo & 0x01) | (bkg_attr_shift_hi & 0x01 << 1);
-	bkg_palette = palette_ram[bkg_palette];
 	
 	spr_pixel = 0; //not implemented yet...
-	spr_palette = palette_ram[secondary_oam[current_spr_index].attr.palette + 4];
+	spr_palette = secondary_oam[current_spr_index].attr.palette + 4;
 
 	if (bkg_pixel == 0 && spr_pixel == 0) {
 		final_pixel = bkg_pixel;
@@ -235,15 +343,15 @@ void fetch_next_scl_sprites()
 		break;
 
 	case 4:
-		spr_patt_shift_lo[oam_counter] = ppu_bus_rd(ppuctrl.spr_pattern_table << 12
-			| (uint16_t)(secondary_oam[oam_counter].tile_index) << 4
-			| scanline - secondary_oam[oam_counter].y_top);
+		spr_patt_shift_lo[primary_oam_counter] = ppu_bus_rd(ppuctrl.spr_pattern_table << 12
+			| (uint16_t)(secondary_oam[primary_oam_counter].tile_index) << 4
+			| scanline - secondary_oam[primary_oam_counter].y_top);
 		break;
 
 	case 6:
-		spr_patt_shift_lo[oam_counter] = ppu_bus_rd(ppuctrl.spr_pattern_table << 12
-			| (uint16_t)(secondary_oam[oam_counter].tile_index) << 4
-			| scanline - secondary_oam[oam_counter].y_top + 8);
+		spr_patt_shift_lo[primary_oam_counter] = ppu_bus_rd(ppuctrl.spr_pattern_table << 12
+			| (uint16_t)(secondary_oam[primary_oam_counter].tile_index) << 4
+			| scanline - secondary_oam[primary_oam_counter].y_top + 8);
 		break;
 	}
 }
@@ -271,11 +379,6 @@ void render()
 	} else {
 		//do nothing (purpose of cycles 337-340 are unknown and probably not impactful)
 	}
-
-	
-
-	dot++;
-	dot = (dot == 341) ? 0 : dot;
 }
 
 void post_render()
@@ -301,7 +404,7 @@ void cycle()
 	}
 	else if (scanline <= 239) {
 		//visible scanline
-		evaluate_sprites();
+		//evaluate_sprites();
 		render();
 	}
 	else if (scanline == 240) {
@@ -312,7 +415,20 @@ void cycle()
 		//vertical blank
 		vertical_blank();
 	}
-	scanline++;
-	scanline = (scanline == 261) ? -1 : scanline;
+	
+	dot++;
+	if (dot == 341) {
+		dot = 0;
+		scanline++;
+		scanline = (scanline == 261) ? -1 : scanline;
+	}
 }
 
+void run_ppu()
+{
+	ppu_init();
+	create_window();
+	while (1) {
+		cycle();
+	}
+}

@@ -13,13 +13,28 @@ opcode opcode_table[0x100] = {
 	{i_BCC,a_REL}, {i_STA,a_INY}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {i_STY,a_ZPX}, {i_STA,a_ZPX}, {i_STX,a_ZPY}, {x_XXX,x_XXX}, {i_TYA,a_IMP}, {i_STA,a_ABY}, {i_TXS,a_IMP}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {i_STA,a_ABX}, {x_XXX,x_XXX}, {x_XXX,x_XXX},
 	{i_LDY,a_IMM}, {i_LDA,a_XND}, {i_LDX,a_IMM}, {x_XXX,x_XXX}, {i_LDY,a_ZPG}, {i_LDA,a_ZPG}, {i_LDX,a_ZPG}, {x_XXX,x_XXX}, {i_TAY,a_IMP}, {i_LDA,a_IMM}, {i_TAX,a_IMP}, {x_XXX,x_XXX}, {i_LDY,a_ABS}, {i_LDA,a_ABS}, {i_LDX,a_ABS}, {x_XXX,x_XXX},
 	{i_BCS,a_REL}, {i_LDA,a_INY}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {i_LDY,a_ZPX}, {i_LDA,a_ZPX}, {i_LDX,a_ZPY}, {x_XXX,x_XXX}, {i_CLV,a_IMP}, {i_LDA,a_ABY}, {i_TSX,a_IMP}, {x_XXX,x_XXX}, {i_LDY,a_ABX}, {i_LDA,a_ABX}, {i_LDX,a_ABY}, {x_XXX,x_XXX},
-	{i_CPY,a_IMM}, {i_CMP,a_XND}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {i_CPY,a_ZPG}, {i_CMP,a_ZPG}, {i_DEC,a_ZPG}, {x_XXX,x_XXX}, {a_INY,a_IMP}, {i_CMP,a_IMM}, {i_DEX,a_IMP}, {x_XXX,x_XXX}, {i_CPY,a_ABS}, {i_CMP,a_ABS}, {i_DEC,a_ABS}, {x_XXX,x_XXX},
+	{i_CPY,a_IMM}, {i_CMP,a_XND}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {i_CPY,a_ZPG}, {i_CMP,a_ZPG}, {i_DEC,a_ZPG}, {x_XXX,x_XXX}, {i_INY,a_IMP}, {i_CMP,a_IMM}, {i_DEX,a_IMP}, {x_XXX,x_XXX}, {i_CPY,a_ABS}, {i_CMP,a_ABS}, {i_DEC,a_ABS}, {x_XXX,x_XXX},
 	{i_BNE,a_REL}, {i_CMP,a_INY}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {i_CMP,a_ZPX}, {i_DEC,a_ZPX}, {x_XXX,x_XXX}, {i_CLD,a_IMP}, {i_CMP,a_ABY}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {i_CMP,a_ABX}, {i_DEC,a_ABX}, {x_XXX,x_XXX},
 	{i_CPX,a_IMM}, {i_SBC,a_XND}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {i_CPX,a_ZPG}, {i_SBC,a_ZPG}, {i_INC,a_ZPG}, {x_XXX,x_XXX}, {i_INX,a_IMP}, {i_SBC,a_IMM}, {i_NOP,a_IMP}, {x_XXX,x_XXX}, {i_CPX,a_ABS}, {i_SBC,a_ABS}, {i_INC,a_ABS}, {x_XXX,x_XXX},
 	{i_BEQ,a_REL}, {i_SBC,a_INY}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {i_SBC,a_ZPX}, {i_INC,a_ZPX}, {x_XXX,x_XXX}, {i_SED,a_IMP}, {i_SBC,a_ABY}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {i_SBC,a_ABX}, {i_INC,a_ABX}, {x_XXX,x_XXX}
 };
 
-static void reset()
+void cpu_init()
+{
+	context.a = 0;
+	context.flags = 0;
+	context.flags = SET_FLAG_ON(FLAG_UNUSED);
+	context.pc = 0;
+	context.sp = 0;
+	context.x = 0;
+	context.y = 0;
+
+	effective_addr = 0;
+	fetched_opcode = 0;
+	fetched_data = 0;
+}
+
+void reset()
 {
 	//technically it's set to 0x00 and then the return address and status
 	//registers are pushed, but these are read cycles so it's ignored.
@@ -28,20 +43,23 @@ static void reset()
 
 	context.pc = (uint16_t)cpu_bus_rd(0xFFFC)
 		| ((uint16_t)cpu_bus_rd(0xFFFD) << 8); //RESET vector
-	
+
+	context.flags = SET_FLAG_ON(FLAG_I);
+
+	//context.pc = 0xC000;
 }
 
 //does what the BRK instruction does, except for a few differences	
-static void nmi()
+void nmi()
 {
 	//1st difference: the I flag doesn't affect its execution (the NMI doesn't care about it)
 	//2nd difference: doesn't increment context.pc
 	STK_PUSH(context.pc >> 8); //high byte
 	STK_PUSH(context.pc & 0xFF); //low byte
-	STK_PUSH(context.flags); //3rd difference: doesn't push the B flag set
+	STK_PUSH(context.flags | FLAG_UNUSED); //3rd difference: doesn't push the B flag set
 
-	context.pc = (uint16_t)cpu_bus_rd(0xFFFA)
-		| ((uint16_t)cpu_bus_rd(0xFFFB) << 8); //4th difference - NMI vector
+	context.pc = (uint16_t)cpu_bus_rd(0xFFFA);
+	context.pc|= ((uint16_t)cpu_bus_rd(0xFFFB) << 8); //4th difference - NMI vector
 
 	context.flags = SET_FLAG_ON(FLAG_I);
 	
@@ -55,7 +73,7 @@ static void irq()
 
 		STK_PUSH(context.pc >> 8); //high byte
 		STK_PUSH(context.pc & 0xFF); //low byte
-		STK_PUSH(context.flags); //2nd diffrence - doesn't push the B flag set
+		STK_PUSH(context.flags | FLAG_UNUSED); //2nd diffrence - doesn't push the B flag set
 
 		context.pc = (uint16_t)cpu_bus_rd(0xFFFE)
 			| ((uint16_t)cpu_bus_rd(0xFFFF) << 8); //IRQ/BRK vector
@@ -66,16 +84,30 @@ static void irq()
 
 uint8_t run_clock()
 {
+	/*cpu_init();
+
 	effective_addr = 0;
 	fetched_opcode = 0;
 	fetched_data = 0;
 
 	reset();
-	while(1) {
+	while(1)*/ //{
 		fetched_opcode = cpu_bus_rd(context.pc);
 		opcode_table[fetched_opcode].addressing_mode();
 		opcode_table[fetched_opcode].instruction();
-	}
+		if (nmi_line) {
+			nmi();
+			nmi_line = 0;
+		}
+		if (context.pc == 0xC85F) {
+			result = result;
+		}
+		if (context.pc == 0xF1EC) {
+			result = result;
+		}
+	//}
+
+	//check for nmi or irq
 }
 void a_ACC()
 {
@@ -119,33 +151,31 @@ void a_IND()
 {
 	effective_addr = cpu_bus_rd(context.pc + 1);
 	effective_addr += cpu_bus_rd(context.pc + 2) << 8;
-	effective_addr = cpu_bus_rd(effective_addr);
+	effective_addr = cpu_bus_rd(effective_addr) + (cpu_bus_rd(effective_addr + 1)) << 8;
 	fetched_data = 0;
 	context.pc += 3;
 }
 void a_INY() 
 {
 	effective_addr = cpu_bus_rd(context.pc + 1);
-	effective_addr += cpu_bus_rd(context.pc + 2) << 8;
-	effective_addr = cpu_bus_rd(effective_addr);
+	//effective_addr += cpu_bus_rd(context.pc + 2) << 8;
+	effective_addr = cpu_bus_rd(effective_addr) + (cpu_bus_rd(effective_addr + 1) << 8);
 	effective_addr += context.y;
-	fetched_data = 0;
-	context.pc += 3;
+	fetched_data = cpu_bus_rd(effective_addr);
+	context.pc += 2;
 }
 void a_XND()
 {
 	effective_addr = (cpu_bus_rd(context.pc + 1) + context.x) & 0xFF; //without carry
-	effective_addr = cpu_bus_rd(effective_addr);
-	effective_addr += cpu_bus_rd((effective_addr + 1) & 0xFF) << 8; //emulate the 0xFF wrapping around bug
-	effective_addr = cpu_bus_rd(effective_addr);
-	fetched_data = 0;
+	effective_addr = cpu_bus_rd(effective_addr) + (cpu_bus_rd((effective_addr + 1) & 0xFF) << 8); //emulate the 0xFF wrapping around bug 
+	effective_addr = cpu_bus_rd(effective_addr); //some instructions use the fetched data as an address
+	fetched_data = effective_addr; //while others use it as data
 	context.pc += 2;
 }
 void a_REL()
 {
 	effective_addr = context.pc;
-	effective_addr += (int8_t)cpu_bus_rd(context.pc + 1);
-	fetched_data = 0;
+	fetched_data = (int8_t)cpu_bus_rd(context.pc + 1);
 	context.pc += 2;
 }
 void a_ZPG() 
@@ -176,13 +206,14 @@ void a_ZPY()
 //instructions
 void i_ADC()
 {
-	result = fetched_data + (context.flags & FLAG_C);	
-	context.a += result;
+	result = fetched_data + context.a + (context.flags & FLAG_C);
 
 	SET_N_FLAG(result);
-	SET_Z_FLAG(result);
+	SET_Z_FLAG((uint8_t)result);
 	SET_C_FLAG(result);
 	SET_V_FLAG(result);
+
+	context.a = result;
 }
 void i_AND()
 {
@@ -190,7 +221,7 @@ void i_AND()
 	context.a = (uint8_t)result;
 
 	SET_N_FLAG(result);
-	SET_Z_FLAG(result);
+	SET_Z_FLAG((uint8_t)result);
 }
 void i_ASL()
 {
@@ -204,45 +235,45 @@ void i_ASL()
 	}
 
 	SET_N_FLAG(result);
-	SET_Z_FLAG(result);
+	SET_Z_FLAG((uint8_t)result);
 	SET_C_FLAG(result);
 }
 void i_BCC()
 {
 	if (!(context.flags & FLAG_C)) {
-		context.pc = effective_addr;
+		context.pc += (int8_t)fetched_data;
 	}
 }
 void i_BCS() {
 	if (context.flags & FLAG_C) {
-		context.pc = effective_addr;
+		context.pc += (int8_t)fetched_data;
 	}
 } 
 void i_BEQ() {
 	if (context.flags & FLAG_Z) {
-		context.pc = effective_addr;
+		context.pc += (int8_t)fetched_data;
 	}
 }
 void i_BIT() {
 	result = fetched_data & context.a;
 
-	SET_N_FLAG(result);
-	SET_Z_FLAG(result);
-	SET_V_FLAG(result);
+	context.flags = fetched_data & 0x80 ? SET_FLAG_ON(FLAG_N) : SET_FLAG_OFF(FLAG_N);
+	SET_Z_FLAG((uint8_t)result);
+	context.flags = fetched_data & 0x40 ? SET_FLAG_ON(FLAG_V) : SET_FLAG_OFF(FLAG_V);
 }
 void i_BMI() {
 	if (context.flags & FLAG_N) {
-		context.pc = effective_addr;
+		context.pc += (int8_t)fetched_data;
 	}
 }
 void i_BNE() {
 	if (!(context.flags & FLAG_Z)) {
-		context.pc = effective_addr;
+		context.pc += (int8_t)fetched_data;
 	}
 }
 void i_BPL() {
 	if (!(context.flags & FLAG_N)) {
-		context.pc = effective_addr;
+		context.pc += (int8_t)fetched_data;
 	}
 }
 void i_BRK() {
@@ -251,7 +282,7 @@ void i_BRK() {
 
 		STK_PUSH(context.pc >> 8); //high byte
 		STK_PUSH(context.pc & 0xFF); //low byte
-		STK_PUSH(context.flags | FLAG_B);
+		STK_PUSH(context.flags | FLAG_UNUSED | FLAG_B);
 		
 		context.pc = (uint16_t)cpu_bus_rd(0xFFFE) 
 			| ((uint16_t)cpu_bus_rd(0xFFFF) << 8); //IRQ/BRK vector
@@ -261,12 +292,12 @@ void i_BRK() {
 }
 void i_BVC() {
 	if (!(context.flags & FLAG_V)) {
-		context.pc = effective_addr;
+		context.pc += (int8_t)fetched_data;
 	}
 }
 void i_BVS() {
 	if (context.flags & FLAG_V) {
-		context.pc = effective_addr;
+		context.pc += (int8_t)fetched_data;
 	}
 }
 void i_CLC() {
@@ -285,97 +316,97 @@ void i_CMP() {
 	result = context.a - fetched_data;
 
 	SET_N_FLAG(result);
-	SET_Z_FLAG(result);
-	SET_C_FLAG(result);
+	SET_Z_FLAG((uint8_t)result);
+	context.flags = ((int16_t)result >= 0) ? SET_FLAG_ON(FLAG_C) : SET_FLAG_OFF(FLAG_C);
 }
 void i_CPX() {
 	result = context.x - fetched_data;
 
 	SET_N_FLAG(result);
-	SET_Z_FLAG(result);
-	SET_C_FLAG(result);
+	SET_Z_FLAG((uint8_t)result);
+	context.flags = ((int16_t)result >= 0) ? SET_FLAG_ON(FLAG_C) : SET_FLAG_OFF(FLAG_C);
 }
 void i_CPY() {
 	result = context.y - fetched_data;
 
 	SET_N_FLAG(result);
-	SET_Z_FLAG(result);
-	SET_C_FLAG(result);
+	SET_Z_FLAG((uint8_t)result);
+	context.flags = ((int16_t)result >= 0) ? SET_FLAG_ON(FLAG_C) : SET_FLAG_OFF(FLAG_C);
 }
 void i_DEC() {
 	result = cpu_bus_rd(effective_addr) - 1;
 	cpu_bus_wr(effective_addr, (uint8_t)result);
 
 	SET_N_FLAG(result);
-	SET_Z_FLAG(result);
+	SET_Z_FLAG((uint8_t)result);
 }
 void i_DEX() {
 	result = --(context.x);
 
 	SET_N_FLAG(result);
-	SET_Z_FLAG(result);
+	SET_Z_FLAG((uint8_t)result);
 }
 void i_DEY() {
 	result = --(context.y);
 
 	SET_N_FLAG(result);
-	SET_Z_FLAG(result);
+	SET_Z_FLAG((uint8_t)result);
 }
 void i_EOR() {
 	result = fetched_data ^ context.a;
 	context.a = (uint8_t)result;
 
 	SET_N_FLAG(result);
-	SET_Z_FLAG(result);
+	SET_Z_FLAG((uint8_t)result);
 }
 void i_INC() {
 	result = cpu_bus_rd(effective_addr) + 1;
 	cpu_bus_wr(effective_addr, (uint8_t)result);
 
 	SET_N_FLAG(result);
-	SET_Z_FLAG(result);
+	SET_Z_FLAG((uint8_t)result);
 } 
 void i_INX() {
 	result = ++(context.x);
 
 	SET_N_FLAG(result);
-	SET_Z_FLAG(result);
+	SET_Z_FLAG((uint8_t)result);
 } 
 void i_INY() {
 	result = ++(context.y);
 
 	SET_N_FLAG(result);
-	SET_Z_FLAG(result);
+	SET_Z_FLAG((uint8_t)result);
 } 
 void i_JMP() {
 	context.pc = effective_addr;
 }
 void i_JSR() {
-	result = context.pc + 3;
+	result = context.pc - 1;// + 3;
 	STK_PUSH(result >> 8); //high byte
 	STK_PUSH(result & 0xFF); //low byte
 	context.pc = effective_addr;
 }
 void i_LDA() {
-	result = cpu_bus_rd(effective_addr);
+	result = fetched_data;
 	context.a = (uint8_t)result;
 
 	SET_N_FLAG(result);
-	SET_Z_FLAG(result);
+	SET_Z_FLAG((uint8_t)result);
 } 
 void i_LDX() {
 	result = cpu_bus_rd(effective_addr);
 	context.x = (uint8_t)result;
 
 	SET_N_FLAG(result);
-	SET_Z_FLAG(result);
+	SET_Z_FLAG((uint8_t)result);
 }
 void i_LDY() {
 	result = cpu_bus_rd(effective_addr);
 	context.y = (uint8_t)result;
 
 	SET_N_FLAG(result);
-	SET_Z_FLAG(result);
+	SET_Z_FLAG((uint8_t)result);
 }
 void i_LSR() {
 	if (opcode_table[fetched_opcode].addressing_mode == a_ACC) {
@@ -388,7 +419,7 @@ void i_LSR() {
 	}
 
 	context.flags = SET_FLAG_OFF(FLAG_N);
-	SET_Z_FLAG(result);
+	SET_Z_FLAG((uint8_t)result);
 	SET_C_FLAG(result);
 } 
 void i_NOP() {
@@ -399,27 +430,27 @@ void i_ORA() {
 	context.a = (uint8_t)result;
 
 	SET_N_FLAG(result);
-	SET_Z_FLAG(result);
+	SET_Z_FLAG((uint8_t)result);
 } 
 void i_PHA() {
 	STK_PUSH(context.a);
 }
 void i_PHP() {
-	STK_PUSH(context.flags);
+	STK_PUSH(context.flags | FLAG_B | FLAG_UNUSED);
 } 
 void i_PLA() {
 	STK_POP(result);
 	context.a = (uint8_t)result;
 
 	SET_N_FLAG(result);
-	SET_Z_FLAG(result);
+	SET_Z_FLAG((uint8_t)result);
 } 
 void i_PLP() {
 	STK_POP(result);
-	context.flags = (uint8_t)result;
+	context.flags = ((uint8_t)result & ~(FLAG_UNUSED | FLAG_B)) | (context.flags & (FLAG_UNUSED | FLAG_B));
 
-	SET_N_FLAG(result);
-	SET_Z_FLAG(result);
+	//SET_N_FLAG(result);
+	//SET_Z_FLAG((uint8_t)result);
 } 
 void i_ROL() {
 	if (opcode_table[fetched_opcode].addressing_mode == a_ACC) {
@@ -436,7 +467,7 @@ void i_ROL() {
 	}
 
 	SET_N_FLAG(result);
-	SET_Z_FLAG(result);
+	SET_Z_FLAG((uint8_t)result);
 	SET_C_FLAG(result);
 }
 void i_ROR() {
@@ -456,11 +487,12 @@ void i_ROR() {
 	}
 
 	SET_N_FLAG(result);
-	SET_Z_FLAG(result);
+	SET_Z_FLAG((uint8_t)result);
 	SET_C_FLAG(result);
 } 
 void i_RTI() {
-	STK_POP(context.flags);
+	STK_POP(result);
+	context.flags = (uint8_t)result | (context.flags & (FLAG_UNUSED | FLAG_B));
 	STK_POP((uint8_t)result); //low byte
 	STK_POP((uint8_t)context.pc); //high byte
 	context.pc = result | (context.pc << 8);
@@ -469,15 +501,18 @@ void i_RTS() {
 	STK_POP((uint8_t)result); //low byte
 	STK_POP((uint8_t)context.pc); //high byte
 	context.pc = result | (context.pc << 8);
+	context.pc++; //because in JSR we push the return address - 1
 } 
 void i_SBC() {
-	result = ~(fetched_data + (context.flags & FLAG_C));
-	context.a += result;
+	fetched_data ^= 0xFF;
+	result = fetched_data + context.a + (context.flags & FLAG_C);
 
 	SET_N_FLAG(result);
-	SET_Z_FLAG(result);
+	SET_Z_FLAG((uint8_t)result);
 	SET_C_FLAG(result);
 	SET_V_FLAG(result);
+
+	context.a = result;
 }
 void i_SEC() {
 	context.flags = SET_FLAG_ON(FLAG_C);

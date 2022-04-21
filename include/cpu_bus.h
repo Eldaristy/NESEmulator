@@ -20,6 +20,8 @@
 #define DISABLED_APU_IO_START 0x4018
 #define CARTIDGE_SPACE_START 0x4020
 
+int nmi_line;
+
 uint8_t cpu_ram[];
 
 uint8_t cpu_bus_rd(uint16_t); //read a byte from cpu bus

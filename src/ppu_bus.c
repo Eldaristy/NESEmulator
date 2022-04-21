@@ -6,10 +6,10 @@ uint8_t ppu_bus_rd(uint16_t addr)
 {
 	uint8_t read_data = 0;
 	if (addr < NAMETABLES_START) { //pattern tables
-		used_mapper.ppu_rd(addr);
+		read_data = used_mapper.ppu_rd(addr);
 	}
 	else if (addr < PALETTE_RAM) { //nametables
-		used_mapper.ppu_rd(addr);
+		read_data = used_mapper.ppu_rd(addr);
 	}
 	else if (addr < 0x4000) { //palette ram
 		read_data = palette_ram[addr & 0x1F];

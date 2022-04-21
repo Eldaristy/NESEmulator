@@ -6,8 +6,10 @@
 
 static uint8_t set_flags(uint16_t); //recieves uint16_t and not uint8_t in order to handle 8-bit overflows 
 
+void cpu_init();
+
 //hardware interrupts
-static void reset();
+void reset();
 static void nmi();
 static void irq();
 
@@ -27,19 +29,19 @@ typedef struct {
 #define FLAG_Z (1 << 1) // Zero
 #define FLAG_I (1 << 2) // Interrupt Disable
 #define FLAG_D (1 << 3) // Decimal
-#define FLAG_B (1 << 4) // B
+#define FLAG_B (1 << 4) // Break
 #define FLAG_UNUSED (1 << 5)
 #define FLAG_V (1 << 6) // Overflow
 #define FLAG_N (1 << 7) //Negative
 
-static cpu_context context;
-static uint16_t effective_addr;
-static uint8_t fetched_opcode;
-static uint8_t fetched_data; 
-static uint16_t result;
+cpu_context context;
+uint16_t effective_addr;
+uint8_t fetched_opcode;
+uint8_t fetched_data; 
+uint16_t result;
 
-#define STK_PUSH(x) cpu_bus_wr((--context.sp | 0x100) + 1, x)
-#define STK_POP(x) x = cpu_bus_rd((context.sp++ | 0x100 + 1))					
+#define STK_PUSH(x) cpu_bus_wr((context.sp-- | 0x100), x)
+#define STK_POP(x) x = cpu_bus_rd((++context.sp | 0x100))					
 
 
 #define SET_FLAG_ON(f) (context.flags | f)
@@ -51,7 +53,11 @@ static uint16_t result;
 #define SET_I_FLAG(x) 
 #define SET_D_FLAG(x) 
 #define SET_B_FLAG(x) 
-#define SET_V_FLAG(x) context.flags = ((~(context.a ^ fetched_data) ^ x) & 0x80) ? SET_FLAG_ON(FLAG_V) : SET_FLAG_OFF(FLAG_Z)	  
+#define SET_V_FLAG(x) context.flags = (~(context.a ^ fetched_data) & (context.a ^ result) & 0x80) ? SET_FLAG_ON(FLAG_V) : SET_FLAG_OFF(FLAG_V)	  
+//#define SET_V_FLAG(x) context.flags = ((!((context.a - fetched_data) & 0x80) && !(fetched_data & 0x80) && ((context.a - fetched_data) & 0x40 & fetched_data)) \
+										|| (((context.a - fetched_data) & 0x80) && (fetched_data & 0x80) && !((context.a - fetched_data) & 0x40 & fetched_data))) \
+										? SET_FLAG_ON(FLAG_V) : SET_FLAG_OFF(FLAG_V)
+//((context.a ^ result) & (fetched_data ^ result) & 0x80)  ? SET_FLAG_ON(FLAG_V) : SET_FLAG_OFF(FLAG_V)	  
 #define SET_N_FLAG(x) context.flags = (x & 0x80) ? SET_FLAG_ON(FLAG_N) : SET_FLAG_OFF(FLAG_N)
 
 typedef struct {
