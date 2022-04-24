@@ -1,22 +1,22 @@
 #include "../include/cpu.h"
 
 opcode opcode_table[0x100] = {
-	{i_BRK,a_IMP}, {i_ORA,a_XND}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {i_ORA,a_ZPG}, {i_ASL,a_ZPG}, {x_XXX,x_XXX}, {i_PHP,a_IMP}, {i_ORA,a_IMM}, {i_ASL,a_ACC}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {i_ORA,a_ABS}, {i_ASL,a_ABS}, {x_XXX,x_XXX},
-	{i_BPL,a_REL}, {i_ORA,a_INY}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {i_ORA,a_ZPX}, {i_ASL,a_ZPX}, {x_XXX,x_XXX}, {i_CLC,a_IMP}, {i_ORA,a_ABY}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {i_ORA,a_ABX}, {i_ASL,a_ABX}, {x_XXX,x_XXX},
-	{i_JSR,a_ABS}, {i_AND,a_XND}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {i_BIT,a_ZPG}, {i_AND,a_ZPG}, {i_ROL,a_ZPG}, {x_XXX,x_XXX}, {i_PLP,a_IMP}, {i_AND,a_IMM}, {i_ROL,a_ACC}, {x_XXX,x_XXX}, {i_BIT,a_ABS}, {i_AND,a_ABS}, {i_ROL,a_ABS}, {x_XXX,x_XXX},
-	{i_BMI,a_REL}, {i_AND,a_INY}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {i_AND,a_ZPX}, {i_ROL,a_ZPX}, {x_XXX,x_XXX}, {i_SEC,a_IMP}, {i_AND,a_ABY}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {i_AND,a_ABX}, {i_ROL,a_ABX}, {x_XXX,x_XXX},
-	{i_RTI,a_IMP}, {i_EOR,a_XND}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {i_EOR,a_ZPG}, {i_LSR,a_ZPG}, {x_XXX,x_XXX}, {i_PHA,a_IMP}, {i_EOR,a_IMM}, {i_LSR,a_ACC}, {x_XXX,x_XXX}, {i_JMP,a_ABS}, {i_EOR,a_ABS}, {i_LSR,a_ABS}, {x_XXX,x_XXX},
-	{i_BVC,a_REL}, {i_EOR,a_INY}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {i_EOR,a_ZPX}, {i_LSR,a_ZPX}, {x_XXX,x_XXX}, {i_CLI,a_IMP}, {i_EOR,a_ABY}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {i_EOR,a_ABX}, {i_LSR,a_ABX}, {x_XXX,x_XXX},
-	{i_RTS,a_IMP}, {i_ADC,a_XND}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {i_ADC,a_ZPG}, {i_ROR,a_ZPG}, {x_XXX,x_XXX}, {i_PLA,a_IMP}, {i_ADC,a_IMM}, {i_ROR,a_ACC}, {x_XXX,x_XXX}, {i_JMP,a_IND}, {i_ADC,a_ABS}, {i_ROR,a_ABS}, {x_XXX,x_XXX},
-	{i_BVS,a_REL}, {i_ADC,a_INY}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {i_ADC,a_ZPX}, {i_ROR,a_ZPX}, {x_XXX,x_XXX}, {i_SEI,a_IMP}, {i_ADC,a_ABY}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {i_ADC,a_ABX}, {i_ROR,a_ABX}, {x_XXX,x_XXX},
-	{x_XXX,x_XXX}, {i_STA,a_XND}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {i_STY,a_ZPG}, {i_STA,a_ZPG}, {i_STX,a_ZPG}, {x_XXX,x_XXX}, {i_DEY,a_IMP}, {x_XXX,x_XXX}, {i_TXA,a_IMP}, {x_XXX,x_XXX}, {i_STY,a_ABS}, {i_STA,a_ABS}, {i_STX,a_ABS}, {x_XXX,x_XXX},
-	{i_BCC,a_REL}, {i_STA,a_INY}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {i_STY,a_ZPX}, {i_STA,a_ZPX}, {i_STX,a_ZPY}, {x_XXX,x_XXX}, {i_TYA,a_IMP}, {i_STA,a_ABY}, {i_TXS,a_IMP}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {i_STA,a_ABX}, {x_XXX,x_XXX}, {x_XXX,x_XXX},
-	{i_LDY,a_IMM}, {i_LDA,a_XND}, {i_LDX,a_IMM}, {x_XXX,x_XXX}, {i_LDY,a_ZPG}, {i_LDA,a_ZPG}, {i_LDX,a_ZPG}, {x_XXX,x_XXX}, {i_TAY,a_IMP}, {i_LDA,a_IMM}, {i_TAX,a_IMP}, {x_XXX,x_XXX}, {i_LDY,a_ABS}, {i_LDA,a_ABS}, {i_LDX,a_ABS}, {x_XXX,x_XXX},
-	{i_BCS,a_REL}, {i_LDA,a_INY}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {i_LDY,a_ZPX}, {i_LDA,a_ZPX}, {i_LDX,a_ZPY}, {x_XXX,x_XXX}, {i_CLV,a_IMP}, {i_LDA,a_ABY}, {i_TSX,a_IMP}, {x_XXX,x_XXX}, {i_LDY,a_ABX}, {i_LDA,a_ABX}, {i_LDX,a_ABY}, {x_XXX,x_XXX},
-	{i_CPY,a_IMM}, {i_CMP,a_XND}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {i_CPY,a_ZPG}, {i_CMP,a_ZPG}, {i_DEC,a_ZPG}, {x_XXX,x_XXX}, {i_INY,a_IMP}, {i_CMP,a_IMM}, {i_DEX,a_IMP}, {x_XXX,x_XXX}, {i_CPY,a_ABS}, {i_CMP,a_ABS}, {i_DEC,a_ABS}, {x_XXX,x_XXX},
-	{i_BNE,a_REL}, {i_CMP,a_INY}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {i_CMP,a_ZPX}, {i_DEC,a_ZPX}, {x_XXX,x_XXX}, {i_CLD,a_IMP}, {i_CMP,a_ABY}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {i_CMP,a_ABX}, {i_DEC,a_ABX}, {x_XXX,x_XXX},
-	{i_CPX,a_IMM}, {i_SBC,a_XND}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {i_CPX,a_ZPG}, {i_SBC,a_ZPG}, {i_INC,a_ZPG}, {x_XXX,x_XXX}, {i_INX,a_IMP}, {i_SBC,a_IMM}, {i_NOP,a_IMP}, {x_XXX,x_XXX}, {i_CPX,a_ABS}, {i_SBC,a_ABS}, {i_INC,a_ABS}, {x_XXX,x_XXX},
-	{i_BEQ,a_REL}, {i_SBC,a_INY}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {i_SBC,a_ZPX}, {i_INC,a_ZPX}, {x_XXX,x_XXX}, {i_SED,a_IMP}, {i_SBC,a_ABY}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {x_XXX,x_XXX}, {i_SBC,a_ABX}, {i_INC,a_ABX}, {x_XXX,x_XXX}
+	{i_BRK,a_IMP, 7}, {i_ORA,a_XND, 6}, {x_XXX,x_XXX, 2}, {x_XXX,x_XXX, 8}, {x_XXX,x_XXX, 3}, {i_ORA,a_ZPG, 3}, {i_ASL,a_ZPG, 5}, {x_XXX,x_XXX, 5}, {i_PHP,a_IMP, 3}, {i_ORA,a_IMM, 2}, {i_ASL,a_ACC, 2}, {x_XXX,x_XXX, 2}, {x_XXX,x_XXX, 4}, {i_ORA,a_ABS, 4}, {i_ASL,a_ABS, 6}, {x_XXX,x_XXX, 6},
+	{i_BPL,a_REL, 2}, {i_ORA,a_INY, 5}, {x_XXX,x_XXX, 2}, {x_XXX,x_XXX, 8}, {x_XXX,x_XXX, 4}, {i_ORA,a_ZPX, 4}, {i_ASL,a_ZPX, 6}, {x_XXX,x_XXX, 6}, {i_CLC,a_IMP, 2}, {i_ORA,a_ABY, 4}, {x_XXX,x_XXX, 2}, {x_XXX,x_XXX, 7}, {x_XXX,x_XXX, 4}, {i_ORA,a_ABX, 4}, {i_ASL,a_ABX, 7}, {x_XXX,x_XXX, 7},
+	{i_JSR,a_ABS, 6}, {i_AND,a_XND, 6}, {x_XXX,x_XXX, 2}, {x_XXX,x_XXX, 8}, {i_BIT,a_ZPG, 3}, {i_AND,a_ZPG, 3}, {i_ROL,a_ZPG, 5}, {x_XXX,x_XXX, 5}, {i_PLP,a_IMP, 4}, {i_AND,a_IMM, 2}, {i_ROL,a_ACC, 2}, {x_XXX,x_XXX, 2}, {i_BIT,a_ABS, 4}, {i_AND,a_ABS, 4}, {i_ROL,a_ABS, 6}, {x_XXX,x_XXX, 6},
+	{i_BMI,a_REL, 2}, {i_AND,a_INY, 5}, {x_XXX,x_XXX, 2}, {x_XXX,x_XXX, 8}, {x_XXX,x_XXX, 4}, {i_AND,a_ZPX, 4}, {i_ROL,a_ZPX, 6}, {x_XXX,x_XXX, 6}, {i_SEC,a_IMP, 2}, {i_AND,a_ABY, 4}, {x_XXX,x_XXX, 2}, {x_XXX,x_XXX, 7}, {x_XXX,x_XXX, 4}, {i_AND,a_ABX, 4}, {i_ROL,a_ABX, 7}, {x_XXX,x_XXX, 7},
+	{i_RTI,a_IMP, 6}, {i_EOR,a_XND, 6}, {x_XXX,x_XXX, 2}, {x_XXX,x_XXX, 8}, {x_XXX,x_XXX, 3}, {i_EOR,a_ZPG, 3}, {i_LSR,a_ZPG, 5}, {x_XXX,x_XXX, 5}, {i_PHA,a_IMP, 3}, {i_EOR,a_IMM, 2}, {i_LSR,a_ACC, 2}, {x_XXX,x_XXX, 2}, {i_JMP,a_ABS, 3}, {i_EOR,a_ABS, 4}, {i_LSR,a_ABS, 6}, {x_XXX,x_XXX, 6},
+	{i_BVC,a_REL, 2}, {i_EOR,a_INY, 5}, {x_XXX,x_XXX, 2}, {x_XXX,x_XXX, 8}, {x_XXX,x_XXX, 4}, {i_EOR,a_ZPX, 4}, {i_LSR,a_ZPX, 6}, {x_XXX,x_XXX, 6}, {i_CLI,a_IMP, 2}, {i_EOR,a_ABY, 4}, {x_XXX,x_XXX, 2}, {x_XXX,x_XXX, 7}, {x_XXX,x_XXX, 4}, {i_EOR,a_ABX, 4}, {i_LSR,a_ABX, 7}, {x_XXX,x_XXX, 7},
+	{i_RTS,a_IMP, 6}, {i_ADC,a_XND, 6}, {x_XXX,x_XXX, 2}, {x_XXX,x_XXX, 8}, {x_XXX,x_XXX, 3}, {i_ADC,a_ZPG, 3}, {i_ROR,a_ZPG, 5}, {x_XXX,x_XXX, 5}, {i_PLA,a_IMP, 4}, {i_ADC,a_IMM, 2}, {i_ROR,a_ACC, 2}, {x_XXX,x_XXX, 2}, {i_JMP,a_IND, 5}, {i_ADC,a_ABS, 4}, {i_ROR,a_ABS, 6}, {x_XXX,x_XXX, 6},
+	{i_BVS,a_REL, 2}, {i_ADC,a_INY, 5}, {x_XXX,x_XXX, 2}, {x_XXX,x_XXX, 8}, {x_XXX,x_XXX, 4}, {i_ADC,a_ZPX, 4}, {i_ROR,a_ZPX, 6}, {x_XXX,x_XXX, 6}, {i_SEI,a_IMP, 2}, {i_ADC,a_ABY, 4}, {x_XXX,x_XXX, 2}, {x_XXX,x_XXX, 7}, {x_XXX,x_XXX, 4}, {i_ADC,a_ABX, 4}, {i_ROR,a_ABX, 7}, {x_XXX,x_XXX, 7},
+	{x_XXX,x_XXX, 2}, {i_STA,a_XND, 6}, {x_XXX,x_XXX, 2}, {x_XXX,x_XXX, 6}, {i_STY,a_ZPG, 3}, {i_STA,a_ZPG, 3}, {i_STX,a_ZPG, 3}, {x_XXX,x_XXX, 3}, {i_DEY,a_IMP, 2}, {x_XXX,x_XXX, 2}, {i_TXA,a_IMP, 2}, {x_XXX,x_XXX, 2}, {i_STY,a_ABS, 4}, {i_STA,a_ABS, 4}, {i_STX,a_ABS, 4}, {x_XXX,x_XXX, 4},
+	{i_BCC,a_REL, 2}, {i_STA,a_INY, 6}, {x_XXX,x_XXX, 2}, {x_XXX,x_XXX, 6}, {i_STY,a_ZPX, 4}, {i_STA,a_ZPX, 4}, {i_STX,a_ZPY, 4}, {x_XXX,x_XXX, 4}, {i_TYA,a_IMP, 2}, {i_STA,a_ABY, 5}, {i_TXS,a_IMP, 2}, {x_XXX,x_XXX, 5}, {x_XXX,x_XXX, 4}, {i_STA,a_ABX, 5}, {x_XXX,x_XXX, 5}, {x_XXX,x_XXX, 5},
+	{i_LDY,a_IMM, 2}, {i_LDA,a_XND, 6}, {i_LDX,a_IMM, 2}, {x_XXX,x_XXX, 6}, {i_LDY,a_ZPG, 3}, {i_LDA,a_ZPG, 3}, {i_LDX,a_ZPG, 3}, {x_XXX,x_XXX, 3}, {i_TAY,a_IMP, 2}, {i_LDA,a_IMM, 2}, {i_TAX,a_IMP, 2}, {x_XXX,x_XXX, 2}, {i_LDY,a_ABS, 4}, {i_LDA,a_ABS, 4}, {i_LDX,a_ABS, 4}, {x_XXX,x_XXX, 4},
+	{i_BCS,a_REL, 2}, {i_LDA,a_INY, 5}, {x_XXX,x_XXX, 2}, {x_XXX,x_XXX, 5}, {i_LDY,a_ZPX, 4}, {i_LDA,a_ZPX, 4}, {i_LDX,a_ZPY, 4}, {x_XXX,x_XXX, 4}, {i_CLV,a_IMP, 2}, {i_LDA,a_ABY, 4}, {i_TSX,a_IMP, 2}, {x_XXX,x_XXX, 4}, {i_LDY,a_ABX, 4}, {i_LDA,a_ABX, 4}, {i_LDX,a_ABY, 4}, {x_XXX,x_XXX, 4},
+	{i_CPY,a_IMM, 2}, {i_CMP,a_XND, 6}, {x_XXX,x_XXX, 2}, {x_XXX,x_XXX, 8}, {i_CPY,a_ZPG, 3}, {i_CMP,a_ZPG, 3}, {i_DEC,a_ZPG, 5}, {x_XXX,x_XXX, 5}, {i_INY,a_IMP, 2}, {i_CMP,a_IMM, 2}, {i_DEX,a_IMP, 2}, {x_XXX,x_XXX, 2}, {i_CPY,a_ABS, 4}, {i_CMP,a_ABS, 4}, {i_DEC,a_ABS, 6}, {x_XXX,x_XXX, 6},
+	{i_BNE,a_REL, 2}, {i_CMP,a_INY, 5}, {x_XXX,x_XXX, 2}, {x_XXX,x_XXX, 8}, {x_XXX,x_XXX, 4}, {i_CMP,a_ZPX, 4}, {i_DEC,a_ZPX, 6}, {x_XXX,x_XXX, 6}, {i_CLD,a_IMP, 2}, {i_CMP,a_ABY, 4}, {x_XXX,x_XXX, 2}, {x_XXX,x_XXX, 7}, {x_XXX,x_XXX, 4}, {i_CMP,a_ABX, 4}, {i_DEC,a_ABX, 7}, {x_XXX,x_XXX, 7},
+	{i_CPX,a_IMM, 2}, {i_SBC,a_XND, 6}, {x_XXX,x_XXX, 2}, {x_XXX,x_XXX, 8}, {i_CPX,a_ZPG, 3}, {i_SBC,a_ZPG, 3}, {i_INC,a_ZPG, 5}, {x_XXX,x_XXX, 5}, {i_INX,a_IMP, 2}, {i_SBC,a_IMM, 2}, {i_NOP,a_IMP, 2}, {x_XXX,x_XXX, 2}, {i_CPX,a_ABS, 4}, {i_SBC,a_ABS, 4}, {i_INC,a_ABS, 6}, {x_XXX,x_XXX, 6},
+	{i_BEQ,a_REL, 2}, {i_SBC,a_INY, 5}, {x_XXX,x_XXX, 2}, {x_XXX,x_XXX, 8}, {x_XXX,x_XXX, 4}, {i_SBC,a_ZPX, 4}, {i_INC,a_ZPX, 6}, {x_XXX,x_XXX, 6}, {i_SED,a_IMP, 2}, {i_SBC,a_ABY, 4}, {x_XXX,x_XXX, 2}, {x_XXX,x_XXX, 7}, {x_XXX,x_XXX, 4}, {i_SBC,a_ABX, 4}, {i_INC,a_ABX, 7}, {x_XXX,x_XXX, 7}
 };
 
 void cpu_init()
@@ -46,6 +46,9 @@ void reset()
 
 	context.flags = SET_FLAG_ON(FLAG_I);
 
+	cpu_cycles = 8;
+	
+
 	//context.pc = 0xC000;
 }
 
@@ -63,6 +66,7 @@ void nmi()
 
 	context.flags = SET_FLAG_ON(FLAG_I);
 	
+	cpu_cycles = 8;
 }
 
 //similar to NMI interrupt and BRK instructions, but with 2 differences to the BRK
@@ -79,6 +83,8 @@ static void irq()
 			| ((uint16_t)cpu_bus_rd(0xFFFF) << 8); //IRQ/BRK vector
 
 		context.flags = SET_FLAG_ON(FLAG_I);
+
+		cpu_cycles = 7;
 	}
 }
 
@@ -92,7 +98,9 @@ uint8_t run_clock()
 
 	reset();
 	while(1)*/ //{
+	if (cpu_cycles == 0) {
 		fetched_opcode = cpu_bus_rd(context.pc);
+		cpu_cycles = opcode_table[fetched_opcode].cycles;
 		opcode_table[fetched_opcode].addressing_mode();
 		opcode_table[fetched_opcode].instruction();
 		if (nmi_line) {
@@ -105,6 +113,12 @@ uint8_t run_clock()
 		if (context.pc == 0xF1EC) {
 			result = result;
 		}
+		if (opcode_table[fetched_opcode].instruction == i_RTS) {
+			result = result;
+		}
+	}
+	cpu_cycles--;
+		
 	//}
 
 	//check for nmi or irq
@@ -125,6 +139,9 @@ void a_ABX()
 {
 	effective_addr = cpu_bus_rd(context.pc + 1); //low byte read from lower address
 	effective_addr += cpu_bus_rd(context.pc + 2) << 8; //high byte read from higher address
+	if (effective_addr >> 8 != (effective_addr + context.x) >> 8) {
+		cpu_cycles++;
+	}
 	effective_addr += context.x;
 	fetched_data = cpu_bus_rd(effective_addr);
 	context.pc += 3;
@@ -133,6 +150,9 @@ void a_ABY()
 {
 	effective_addr = cpu_bus_rd(context.pc + 1); //low byte read from lower address
 	effective_addr += cpu_bus_rd(context.pc + 2) << 8; //high byte read from higher address
+	if (effective_addr >> 8 != (effective_addr + context.y) >> 8) {
+		cpu_cycles++;
+	}
 	effective_addr += context.y;
 	fetched_data = cpu_bus_rd(effective_addr);
 	context.pc += 3;
@@ -160,6 +180,9 @@ void a_INY()
 	effective_addr = cpu_bus_rd(context.pc + 1);
 	//effective_addr += cpu_bus_rd(context.pc + 2) << 8;
 	effective_addr = cpu_bus_rd(effective_addr) + (cpu_bus_rd(effective_addr + 1) << 8);
+	if (effective_addr >> 8 != (effective_addr + context.y) >> 8) {
+		cpu_cycles++;
+	}
 	effective_addr += context.y;
 	fetched_data = cpu_bus_rd(effective_addr);
 	context.pc += 2;
@@ -241,17 +264,29 @@ void i_ASL()
 void i_BCC()
 {
 	if (!(context.flags & FLAG_C)) {
+		if (context.pc >> 8 != (context.pc + (int8_t)fetched_data) >> 8) {
+			cpu_cycles++;
+		}
 		context.pc += (int8_t)fetched_data;
+		cpu_cycles++;
 	}
 }
 void i_BCS() {
 	if (context.flags & FLAG_C) {
+		if (context.pc >> 8 != (context.pc + (int8_t)fetched_data) >> 8) {
+			cpu_cycles++;
+		}
 		context.pc += (int8_t)fetched_data;
+		cpu_cycles++;
 	}
 } 
 void i_BEQ() {
 	if (context.flags & FLAG_Z) {
+		if (context.pc >> 8 != (context.pc + (int8_t)fetched_data) >> 8) {
+			cpu_cycles++;
+		}
 		context.pc += (int8_t)fetched_data;
+		cpu_cycles++;
 	}
 }
 void i_BIT() {
@@ -263,17 +298,29 @@ void i_BIT() {
 }
 void i_BMI() {
 	if (context.flags & FLAG_N) {
+		if (context.pc >> 8 != (context.pc + (int8_t)fetched_data) >> 8) {
+			cpu_cycles++;
+		}
 		context.pc += (int8_t)fetched_data;
+		cpu_cycles++;
 	}
 }
 void i_BNE() {
 	if (!(context.flags & FLAG_Z)) {
+		if (context.pc >> 8 != (context.pc + (int8_t)fetched_data) >> 8) {
+			cpu_cycles++;
+		}
 		context.pc += (int8_t)fetched_data;
+		cpu_cycles++;
 	}
 }
 void i_BPL() {
 	if (!(context.flags & FLAG_N)) {
+		if (context.pc >> 8 != (context.pc + (int8_t)fetched_data) >> 8) {
+			cpu_cycles++;
+		}
 		context.pc += (int8_t)fetched_data;
+		cpu_cycles++;
 	}
 }
 void i_BRK() {
@@ -292,12 +339,20 @@ void i_BRK() {
 }
 void i_BVC() {
 	if (!(context.flags & FLAG_V)) {
+		if (context.pc >> 8 != (context.pc + (int8_t)fetched_data) >> 8) {
+			cpu_cycles++;
+		}
 		context.pc += (int8_t)fetched_data;
+		cpu_cycles++;
 	}
 }
 void i_BVS() {
 	if (context.flags & FLAG_V) {
+		if (context.pc >> 8 != (context.pc + (int8_t)fetched_data) >> 8) {
+			cpu_cycles++;
+		}
 		context.pc += (int8_t)fetched_data;
+		cpu_cycles++;
 	}
 }
 void i_CLC() {

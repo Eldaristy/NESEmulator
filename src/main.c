@@ -14,14 +14,14 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
-	parse_file("C:\\Users\\user\\Desktop\\donkey_kong.nes");
-	create_window();
-
+	parse_file("C:\\Users\\user\\Desktop\\nestests\\donkey_kong.nes");
+	
 	cpu_init();
 	reset();
 
 	ppu_init();
 
+	create_window();
 	while (TRUE) {
 		run_clock();
 

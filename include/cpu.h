@@ -60,9 +60,12 @@ uint16_t result;
 //((context.a ^ result) & (fetched_data ^ result) & 0x80)  ? SET_FLAG_ON(FLAG_V) : SET_FLAG_OFF(FLAG_V)	  
 #define SET_N_FLAG(x) context.flags = (x & 0x80) ? SET_FLAG_ON(FLAG_N) : SET_FLAG_OFF(FLAG_N)
 
+uint8_t cpu_cycles;
+
 typedef struct {
 	void (*instruction)();
 	void (*addressing_mode)();
+	uint8_t cycles;
 } opcode;
 
 static opcode opcode_table[0x100];

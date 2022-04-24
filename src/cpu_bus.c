@@ -80,7 +80,7 @@ void cpu_bus_wr(uint16_t addr, uint8_t val)
 			ppuctrl.reg = val;
 			if (ppustatus.vblank) {
 				if (ppuctrl.gen_nmi) {
-					gen_nmi();
+					//gen_nmi();
 				}
 			}
 

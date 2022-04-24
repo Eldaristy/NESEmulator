@@ -102,7 +102,9 @@ void load_bkg_shifts()
 	
 	bkg_patt_shift_lo = bkg_patt_shift_lo & 0xFF | (uint16_t)(patt_tbl_lo) << 8;
 	bkg_patt_shift_hi = bkg_patt_shift_hi & 0xFF | (uint16_t)(patt_tbl_hi) << 8;
-
+	if (bkg_patt_shift_lo != 0) {
+		bkg_attr_shift_lo = bkg_attr_shift_lo;
+	}
 	if (mod_coarse_y <= 1) { //top
 		if (mod_coarse_x <= 1) { //top-left
 			bkg_attr_shift_lo = attr_tbl_id & 0x01;
@@ -130,7 +132,7 @@ void load_spr_shifts()
 void pre_render()
 {
 	if (dot == 0) {
-		ppustatus.vblank = 1;
+		ppustatus.vblank = 0;
 	} else if (dot >= 321 && dot <= 336) {
 	//fetch data for first 2 tiles in next scanline
 	fetch_next_scl_bkground();
@@ -142,7 +144,7 @@ void pre_render()
 
 void fetch_next_scl_bkground()
 {
-	switch (dot - 1 % 8) {
+	switch ((dot - 1) & 0x07) {
 	case 0:
 		load_bkg_shifts();
 
@@ -173,21 +175,43 @@ void fetch_next_scl_bkground()
 		break;
 
 	case 7:
+		if (!ppumask.show_bkg) {
+			return;
+		}
 		//increment fine_x_scroll, then check if it wraps around and requires
 		//incrementing coarse_x... then nametable...
 		fine_x_scroll++;
 		if (fine_x_scroll == 8) {
 			fine_x_scroll = 0;
-			vram_addr.coarse_x++;
+			if (vram_addr.coarse_x == 31) {
+				vram_addr.coarse_x = 0;
+				if (vram_addr.fine_y_scroll == 7) {
+					vram_addr.fine_y_scroll = 0;
+					if (vram_addr.coarse_y == 31) {
+						vram_addr.coarse_y = 0;
+						if (vram_addr.nametable == 3) {
+							vram_addr.nametable = 0;
+						} else {
+							vram_addr.nametable++;
+						}
+					} else {
+						vram_addr.coarse_y++;
+					}
+				} else {
+					vram_addr.fine_y_scroll++;
+				}
+			} else {
+				vram_addr.coarse_x++;
+			}
 		}
-		if (vram_addr.coarse_x == 31) {
+		/*if (vram_addr.coarse_x == 31) {
 			vram_addr.coarse_x = 0;
 			vram_addr.nametable++;
 		}
 		if (vram_addr.nametable == 3) {
 			vram_addr.nametable = 0;
 		}
-		break;
+		break;*/
 	}
 }
 void evaluate_sprites()
@@ -303,7 +327,9 @@ void create_pixel()
 
 	bkg_pixel = (bkg_patt_shift_lo & 0x0001) | (bkg_patt_shift_hi & 0x0001 << 1);
 	bkg_palette = (bkg_attr_shift_lo & 0x01) | (bkg_attr_shift_hi & 0x01 << 1);
-	
+	if (bkg_pixel != 0) {
+		bkg_pixel = bkg_pixel;
+	}
 	spr_pixel = 0; //not implemented yet...
 	spr_palette = secondary_oam[current_spr_index].attr.palette + 4;
 
@@ -325,8 +351,14 @@ void create_pixel()
 			final_palette = spr_palette;
 		}
 	}
-
-	set_pixel(dot - 1, scanline, colors[((uint8_t*)palette_ram)[final_palette * 4 + final_pixel]]);
+	uint8_t* color = colors[((uint8_t*)palette_ram)[final_palette * 4 + final_pixel]];
+	al_draw_pixel(dot - 1, scanline, al_map_rgb(color[0], color[1], color[2]));
+	//al_put_pixel(dot - 1, scanline, al_map_rgb(color[0], color[1], color[2]));
+	//display_buffer[(dot - 1) * 3][scanline] = colors[((uint8_t*)palette_ram)[final_palette * 4 + final_pixel]];
+	if (dot - 1 == 255 && scanline == 239) {
+		al_flip_display();
+	}
+	//set_pixel(dot - 1, scanline, colors[((uint8_t*)palette_ram)[final_palette * 4 + final_pixel]]);
 }
 void fetch_next_scl_sprites()
 {
