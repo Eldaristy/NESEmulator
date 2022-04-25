@@ -49,7 +49,7 @@ void reset()
 	cpu_cycles = 8;
 	
 
-	//context.pc = 0xC000;
+	context.pc = 0xC000;
 }
 
 //does what the BRK instruction does, except for a few differences	
@@ -98,6 +98,8 @@ uint8_t run_clock()
 
 	reset();
 	while(1)*/ //{
+	
+	cpu_cycles = 0;
 	if (cpu_cycles == 0) {
 		fetched_opcode = cpu_bus_rd(context.pc);
 		cpu_cycles = opcode_table[fetched_opcode].cycles;
@@ -107,7 +109,7 @@ uint8_t run_clock()
 			nmi();
 			nmi_line = 0;
 		}
-		if (context.pc == 0xC85F) {
+		if (context.pc == 0xF1B4) {
 			result = result;
 		}
 		if (context.pc == 0xF1EC) {
@@ -116,9 +118,16 @@ uint8_t run_clock()
 		if (opcode_table[fetched_opcode].instruction == i_RTS) {
 			result = result;
 		}
+		if (context.pc == 0xd053) {
+			result = result;
+		}
+		if (context.pc == 0xf805) {
+			result = result;
+		}
 	}
-	cpu_cycles--;
-		
+	//cpu_cycles--;
+	
+	
 	//}
 
 	//check for nmi or irq
@@ -132,7 +141,7 @@ void a_ABS()
 {
 	effective_addr = cpu_bus_rd(context.pc + 1); //low byte read from lower address
 	effective_addr += cpu_bus_rd(context.pc + 2) << 8; //high byte read from higher address
-	fetched_data = cpu_bus_rd(effective_addr);
+	//fetched_data = cpu_bus_rd(effective_addr);
 	context.pc += 3;
 }
 void a_ABX()
@@ -143,7 +152,7 @@ void a_ABX()
 		cpu_cycles++;
 	}
 	effective_addr += context.x;
-	fetched_data = cpu_bus_rd(effective_addr);
+	//fetched_data = cpu_bus_rd(effective_addr);
 	context.pc += 3;
 }
 void a_ABY()
@@ -154,13 +163,13 @@ void a_ABY()
 		cpu_cycles++;
 	}
 	effective_addr += context.y;
-	fetched_data = cpu_bus_rd(effective_addr);
+	//fetched_data = cpu_bus_rd(effective_addr);
 	context.pc += 3;
 }
 void a_IMM()
 {
 	effective_addr = context.pc + 1;
-	fetched_data = cpu_bus_rd(effective_addr);
+	//fetched_data = cpu_bus_rd(effective_addr);
 	context.pc += 2;
 }
 void a_IMP()
@@ -172,7 +181,7 @@ void a_IND()
 	effective_addr = cpu_bus_rd(context.pc + 1);
 	effective_addr += cpu_bus_rd(context.pc + 2) << 8;
 	effective_addr = cpu_bus_rd(effective_addr) + (cpu_bus_rd(effective_addr + 1)) << 8;
-	fetched_data = 0;
+	//fetched_data = 0;
 	context.pc += 3;
 }
 void a_INY() 
@@ -184,27 +193,27 @@ void a_INY()
 		cpu_cycles++;
 	}
 	effective_addr += context.y;
-	fetched_data = cpu_bus_rd(effective_addr);
+	//fetched_data = cpu_bus_rd(effective_addr);
 	context.pc += 2;
 }
 void a_XND()
 {
 	effective_addr = (cpu_bus_rd(context.pc + 1) + context.x) & 0xFF; //without carry
 	effective_addr = cpu_bus_rd(effective_addr) + (cpu_bus_rd((effective_addr + 1) & 0xFF) << 8); //emulate the 0xFF wrapping around bug 
-	effective_addr = cpu_bus_rd(effective_addr); //some instructions use the fetched data as an address
-	fetched_data = effective_addr; //while others use it as data
+	//effective_addr = cpu_bus_rd(effective_addr); //some instructions use the fetched data as an address
+	//fetched_data = effective_addr; //while others use it as data
 	context.pc += 2;
 }
 void a_REL()
-{
+{ 
 	effective_addr = context.pc;
-	fetched_data = (int8_t)cpu_bus_rd(context.pc + 1);
+	//fetched_data = (int8_t)cpu_bus_rd(context.pc + 1);
 	context.pc += 2;
 }
 void a_ZPG() 
 {
 	effective_addr = cpu_bus_rd(context.pc + 1);
-	fetched_data = cpu_bus_rd(effective_addr);
+	//fetched_data = cpu_bus_rd(effective_addr);
 	context.pc += 2;
 }
 void a_ZPX() 
@@ -213,7 +222,7 @@ void a_ZPX()
 	effective_addr = cpu_bus_rd(context.pc + 1);
 	effective_addr += context.x;
 	effective_addr &= 0xFF;
-	fetched_data = cpu_bus_rd(effective_addr);
+	//fetched_data = cpu_bus_rd(effective_addr);
 	context.pc += 2;
 }
 void a_ZPY()
@@ -222,13 +231,14 @@ void a_ZPY()
 	effective_addr = cpu_bus_rd(context.pc + 1);
 	effective_addr += context.y;
 	effective_addr &= 0xFF;
-	fetched_data = cpu_bus_rd(effective_addr);
+	//fetched_data = cpu_bus_rd(effective_addr);
 	context.pc += 2;
 }
 
 //instructions
 void i_ADC()
 {
+	fetched_data = cpu_bus_rd(effective_addr);
 	result = fetched_data + context.a + (context.flags & FLAG_C);
 
 	SET_N_FLAG(result);
@@ -240,6 +250,7 @@ void i_ADC()
 }
 void i_AND()
 {
+	fetched_data = cpu_bus_rd(effective_addr);
 	result = fetched_data & context.a;
 	context.a = (uint8_t)result;
 
@@ -253,6 +264,7 @@ void i_ASL()
 		context.a = (uint8_t)result;
 	}
 	else {
+		fetched_data = cpu_bus_rd(effective_addr);
 		result = fetched_data << 1;
 		cpu_bus_wr(effective_addr, (uint8_t)result);
 	}
@@ -264,6 +276,7 @@ void i_ASL()
 void i_BCC()
 {
 	if (!(context.flags & FLAG_C)) {
+		fetched_data = (int8_t)cpu_bus_rd(context.pc - 1);
 		if (context.pc >> 8 != (context.pc + (int8_t)fetched_data) >> 8) {
 			cpu_cycles++;
 		}
@@ -273,6 +286,7 @@ void i_BCC()
 }
 void i_BCS() {
 	if (context.flags & FLAG_C) {
+		fetched_data = (int8_t)cpu_bus_rd(context.pc - 1);
 		if (context.pc >> 8 != (context.pc + (int8_t)fetched_data) >> 8) {
 			cpu_cycles++;
 		}
@@ -282,6 +296,7 @@ void i_BCS() {
 } 
 void i_BEQ() {
 	if (context.flags & FLAG_Z) {
+		fetched_data = (int8_t)cpu_bus_rd(context.pc - 1);
 		if (context.pc >> 8 != (context.pc + (int8_t)fetched_data) >> 8) {
 			cpu_cycles++;
 		}
@@ -290,6 +305,7 @@ void i_BEQ() {
 	}
 }
 void i_BIT() {
+	fetched_data = cpu_bus_rd(effective_addr);
 	result = fetched_data & context.a;
 
 	context.flags = fetched_data & 0x80 ? SET_FLAG_ON(FLAG_N) : SET_FLAG_OFF(FLAG_N);
@@ -298,6 +314,7 @@ void i_BIT() {
 }
 void i_BMI() {
 	if (context.flags & FLAG_N) {
+		fetched_data = (int8_t)cpu_bus_rd(context.pc - 1);
 		if (context.pc >> 8 != (context.pc + (int8_t)fetched_data) >> 8) {
 			cpu_cycles++;
 		}
@@ -307,6 +324,7 @@ void i_BMI() {
 }
 void i_BNE() {
 	if (!(context.flags & FLAG_Z)) {
+		fetched_data = (int8_t)cpu_bus_rd(context.pc - 1);
 		if (context.pc >> 8 != (context.pc + (int8_t)fetched_data) >> 8) {
 			cpu_cycles++;
 		}
@@ -316,6 +334,7 @@ void i_BNE() {
 }
 void i_BPL() {
 	if (!(context.flags & FLAG_N)) {
+		fetched_data = (int8_t)cpu_bus_rd(context.pc - 1);
 		if (context.pc >> 8 != (context.pc + (int8_t)fetched_data) >> 8) {
 			cpu_cycles++;
 		}
@@ -339,6 +358,7 @@ void i_BRK() {
 }
 void i_BVC() {
 	if (!(context.flags & FLAG_V)) {
+		fetched_data = (int8_t)cpu_bus_rd(context.pc - 1);
 		if (context.pc >> 8 != (context.pc + (int8_t)fetched_data) >> 8) {
 			cpu_cycles++;
 		}
@@ -348,6 +368,7 @@ void i_BVC() {
 }
 void i_BVS() {
 	if (context.flags & FLAG_V) {
+		fetched_data = (int8_t)cpu_bus_rd(context.pc - 1);
 		if (context.pc >> 8 != (context.pc + (int8_t)fetched_data) >> 8) {
 			cpu_cycles++;
 		}
@@ -368,6 +389,7 @@ void i_CLV() {
 	context.flags = SET_FLAG_OFF(FLAG_V);
 }
 void i_CMP() {
+	fetched_data = cpu_bus_rd(effective_addr);
 	result = context.a - fetched_data;
 
 	SET_N_FLAG(result);
@@ -375,6 +397,7 @@ void i_CMP() {
 	context.flags = ((int16_t)result >= 0) ? SET_FLAG_ON(FLAG_C) : SET_FLAG_OFF(FLAG_C);
 }
 void i_CPX() {
+	fetched_data = cpu_bus_rd(effective_addr);
 	result = context.x - fetched_data;
 
 	SET_N_FLAG(result);
@@ -382,6 +405,7 @@ void i_CPX() {
 	context.flags = ((int16_t)result >= 0) ? SET_FLAG_ON(FLAG_C) : SET_FLAG_OFF(FLAG_C);
 }
 void i_CPY() {
+	fetched_data = cpu_bus_rd(effective_addr);
 	result = context.y - fetched_data;
 
 	SET_N_FLAG(result);
@@ -408,6 +432,7 @@ void i_DEY() {
 	SET_Z_FLAG((uint8_t)result);
 }
 void i_EOR() {
+	fetched_data = cpu_bus_rd(effective_addr);
 	result = fetched_data ^ context.a;
 	context.a = (uint8_t)result;
 
@@ -443,6 +468,7 @@ void i_JSR() {
 	context.pc = effective_addr;
 }
 void i_LDA() {
+	fetched_data = cpu_bus_rd(effective_addr);
 	result = fetched_data;
 	context.a = (uint8_t)result;
 
@@ -469,6 +495,7 @@ void i_LSR() {
 		context.a = (uint8_t)result;
 	}
 	else {
+		fetched_data = cpu_bus_rd(effective_addr);
 		result = fetched_data >> 1;
 		cpu_bus_wr(effective_addr, (uint8_t)result);
 	}
@@ -481,6 +508,7 @@ void i_NOP() {
 
 } 
 void i_ORA() {
+	fetched_data = cpu_bus_rd(effective_addr);
 	result = fetched_data | context.a;
 	context.a = (uint8_t)result;
 
@@ -515,6 +543,7 @@ void i_ROL() {
 		context.a = (uint8_t)result;
 	}
 	else {
+		fetched_data = cpu_bus_rd(effective_addr);
 		result = fetched_data;
 		result <<= 1;
 		result |= context.flags & FLAG_C;
@@ -534,6 +563,7 @@ void i_ROR() {
 		context.a = (uint8_t)result;
 	}
 	else {
+		fetched_data = cpu_bus_rd(effective_addr);
 		result = fetched_data;
 		result |= result & 0x1 << 9;
 		result >>= 1;
@@ -559,6 +589,7 @@ void i_RTS() {
 	context.pc++; //because in JSR we push the return address - 1
 } 
 void i_SBC() {
+	fetched_data = cpu_bus_rd(effective_addr);
 	fetched_data ^= 0xFF;
 	result = fetched_data + context.a + (context.flags & FLAG_C);
 
