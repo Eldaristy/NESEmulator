@@ -1,6 +1,6 @@
 #include "../include/ppu.h"
 
-uint8_t colors[0x40][3] = {
+uint8_t colors[0x48][3] = {
 	{84, 84, 84},
 	{0, 30, 116},
 	{8, 16, 144},
@@ -14,6 +14,8 @@ uint8_t colors[0x40][3] = {
 	{0, 64, 0},
 	{0, 60, 0},
 	{0, 50, 60},
+	{0, 0, 0},
+	{0, 0, 0},
 	{0, 0, 0},
 	{152, 150, 152},
 	{8, 76, 196},
@@ -29,6 +31,8 @@ uint8_t colors[0x40][3] = {
 	{0, 118, 40},
 	{0, 102, 120},
 	{0, 0, 0},
+	{0, 0, 0},
+	{0, 0, 0},
 	{236, 238, 236},
 	{76, 154, 236},
 	{120, 124, 236},
@@ -43,6 +47,8 @@ uint8_t colors[0x40][3] = {
 	{56, 204, 108},
 	{56, 180, 204},
 	{60, 60, 60},
+	{0, 0, 0},
+	{0, 0, 0},
 	{236, 238, 236},
 	{168, 204, 236},
 	{188, 188, 236},
@@ -57,6 +63,8 @@ uint8_t colors[0x40][3] = {
 	{152, 226, 180},
 	{160, 214, 228},
 	{160, 162, 160},
+	{0, 0, 0},
+	{0, 0, 0},
 };
 
 void gen_nmi()
@@ -97,30 +105,62 @@ void ppu_init()
 
 void load_bkg_shifts()
 {
-	uint8_t mod_coarse_x = vram_addr.coarse_x & 3; //same as "% 4", just wanted to use bit-wise
+	uint8_t mod_coarse_x = vram_addr.coarse_x & 3; //same as "% 2", just wanted to use bit-wise
 	uint8_t mod_coarse_y = vram_addr.coarse_y & 3;
 	
-	bkg_patt_shift_lo = bkg_patt_shift_lo & 0xFF | (uint16_t)(patt_tbl_lo) << 8;
-	bkg_patt_shift_hi = bkg_patt_shift_hi & 0xFF | (uint16_t)(patt_tbl_hi) << 8;
-	if (bkg_patt_shift_lo != 0) {
+	
+	if (patt_tbl_lo != 0 || patt_tbl_hi != 0) {
+		patt_tbl_hi = patt_tbl_hi;
+	}
+
+	//that's a nice one... reversing the bits is essential since we use the low bits of the shift registers
+	//to draw the pixels each time (and then shift them right). Originally, the pattern bits
+	//
+	//reverse all the bits of patt_tbl_lo
+	patt_tbl_lo = (patt_tbl_lo & 0x7E) | ((patt_tbl_lo & 0x80) >> 7) | ((patt_tbl_lo & 0x01) << 7);
+	patt_tbl_lo = (patt_tbl_lo & 0xBD) | ((patt_tbl_lo & 0x40) >> 5) | ((patt_tbl_lo & 0x02) << 5);
+	patt_tbl_lo = (patt_tbl_lo & 0xDB) | ((patt_tbl_lo & 0x20) >> 3) | ((patt_tbl_lo & 0x04) << 3);
+	patt_tbl_lo = (patt_tbl_lo & 0xE7) | ((patt_tbl_lo & 0x10) >> 1) | ((patt_tbl_lo & 0x08) << 1);
+
+	patt_tbl_hi = (patt_tbl_hi & 0x7E) | ((patt_tbl_hi & 0x80) >> 7) | ((patt_tbl_hi & 0x01) << 7);
+	patt_tbl_hi = (patt_tbl_hi & 0xBD) | ((patt_tbl_hi & 0x40) >> 5) | ((patt_tbl_hi & 0x02) << 5);
+	patt_tbl_hi = (patt_tbl_hi & 0xDB) | ((patt_tbl_hi & 0x20) >> 3) | ((patt_tbl_hi & 0x04) << 3);
+	patt_tbl_hi = (patt_tbl_hi & 0xE7) | ((patt_tbl_hi & 0x10) >> 1) | ((patt_tbl_hi & 0x08) << 1);
+
+	//patt_tbl_lo = ((patt_tbl_lo & 0xF0) >> 4) | ((patt_tbl_lo & 0x0F) << 4);
+	//patt_tbl_lo = ((patt_tbl_lo & 0xCC) >> 2) | ((patt_tbl_lo & 0x33) << 2);
+	//patt_tbl_lo = ((patt_tbl_lo & 0xAA) >> 1) | ((patt_tbl_lo & 0x55) << 1);
+
+	////reverse all the bits of patt_tbl_hi
+	//patt_tbl_hi = ((patt_tbl_hi & 0xF0) >> 4) | ((patt_tbl_hi & 0x0F) << 4);
+	//patt_tbl_hi = ((patt_tbl_hi & 0xCC) >> 2) | ((patt_tbl_hi & 0x33) << 2);
+	//patt_tbl_hi = ((patt_tbl_hi & 0xAA) >> 1) | ((patt_tbl_lo & 0x55) << 1);
+
+	bkg_patt_shift_lo = bkg_patt_shift_lo & 0xFF | ((uint16_t)(patt_tbl_lo) << 8);
+	bkg_patt_shift_hi = bkg_patt_shift_hi & 0xFF | ((uint16_t)(patt_tbl_hi) << 8);
+
+	//bkg_patt_shift_lo = (bkg_patt_shift_lo << 8) | ((patt_tbl_lo) & 0xFF);
+	//bkg_patt_shift_hi = (bkg_patt_shift_hi << 8) | ((patt_tbl_hi) & 0xFF);
+
+	if (bkg_patt_shift_lo != 0 || bkg_patt_shift_hi != 0) {
 		bkg_attr_shift_lo = bkg_attr_shift_lo;
 	}
-	if (mod_coarse_y <= 1) { //top
-		if (mod_coarse_x <= 1) { //top-left
+	if (mod_coarse_y == 0 || mod_coarse_y == 1) { //top
+		if (mod_coarse_x == 0 || mod_coarse_x == 1) { //top-left
 			bkg_attr_shift_lo = attr_tbl_id & 0x01;
-			bkg_attr_shift_hi = attr_tbl_id & 0x02;
+			bkg_attr_shift_hi = (attr_tbl_id & 0x02) >> 1;
 		} else { //top-right
-			bkg_attr_shift_lo = attr_tbl_id & 0x04;
-			bkg_attr_shift_hi = attr_tbl_id & 0x08;
+			bkg_attr_shift_lo = (attr_tbl_id & 0x04) >> 2;
+			bkg_attr_shift_hi = (attr_tbl_id & 0x08) >> 3;
 		}
 	} else { //bottom
-		if (mod_coarse_x <= 1) { //bottom-left
-			bkg_attr_shift_lo = attr_tbl_id & 0x10;
-			bkg_attr_shift_hi = attr_tbl_id & 0x20;
+		if (mod_coarse_x == 0 || mod_coarse_x == 1) { //bottom-left
+			bkg_attr_shift_lo = (attr_tbl_id & 0x10) >> 4;
+			bkg_attr_shift_hi = (attr_tbl_id & 0x20) >> 5;
 		}
 		else { //bottom-right
-			bkg_attr_shift_lo = attr_tbl_id & 0x40;
-			bkg_attr_shift_hi = attr_tbl_id & 0x80;
+			bkg_attr_shift_lo = (attr_tbl_id & 0x40) >> 6;
+			bkg_attr_shift_hi = (attr_tbl_id & 0x80) >> 7;
 		}
 	}
 }
@@ -133,12 +173,17 @@ void pre_render()
 {
 	if (dot == 0) {
 		ppustatus.vblank = 0;
+		if (ppumask.show_bkg || ppumask.show_spr) {
+			vram_addr.reg = temp_vram_addr.reg;
+		}
+		//vram_addr.reg = 0;
+		//vram_addr.nametable = 0;
 	} else if (dot >= 321 && dot <= 336) {
 	//fetch data for first 2 tiles in next scanline
-	fetch_next_scl_bkground();
+		fetch_next_scl_bkground();
 
-	bkg_patt_shift_lo >>= 1;
-	bkg_patt_shift_hi >>= 1;
+		bkg_patt_shift_lo >>= 1;
+		bkg_patt_shift_hi >>= 1;
 	}
 }
 
@@ -151,6 +196,9 @@ void fetch_next_scl_bkground()
 		//fetch pattern table byte
 		patt_tbl_id = ppu_bus_rd(NAMETABLES_START
 			| (vram_addr.reg & 0x0FFF));
+		if (patt_tbl_id != 0 && patt_tbl_id != 0x24) {
+			patt_tbl_id = patt_tbl_id;
+		}
 		break;
 
 	case 2:
@@ -163,47 +211,61 @@ void fetch_next_scl_bkground()
 		break;
 
 	case 4:
-		patt_tbl_lo = ppu_bus_rd(ppuctrl.bkg_pattern_table << 12
-			| (uint16_t)patt_tbl_id << 4
+		patt_tbl_lo = ppu_bus_rd((ppuctrl.bkg_pattern_table << 12)
+			| ((uint16_t)patt_tbl_id << 4)
 			| vram_addr.fine_y_scroll);
 		break;
 
 	case 6:
-		patt_tbl_hi = ppu_bus_rd(ppuctrl.bkg_pattern_table << 12
-			| (uint16_t)patt_tbl_id << 4
-			| vram_addr.fine_y_scroll + 8);
+		patt_tbl_hi = ppu_bus_rd((ppuctrl.bkg_pattern_table << 12)
+			| ((uint16_t)patt_tbl_id << 4)
+			| (vram_addr.fine_y_scroll + 8));
 		break;
 
 	case 7:
-		if (!ppumask.show_bkg) {
-			return;
+		if (patt_tbl_hi || patt_tbl_lo) {
+			patt_tbl_hi = patt_tbl_hi;
+
 		}
-		//increment fine_x_scroll, then check if it wraps around and requires
-		//incrementing coarse_x... then nametable...
-		fine_x_scroll++;
-		if (fine_x_scroll == 8) {
-			fine_x_scroll = 0;
-			if (vram_addr.coarse_x == 31) {
-				vram_addr.coarse_x = 0;
-				if (vram_addr.fine_y_scroll == 7) {
-					vram_addr.fine_y_scroll = 0;
-					if (vram_addr.coarse_y == 31) {
-						vram_addr.coarse_y = 0;
-						if (vram_addr.nametable == 3) {
-							vram_addr.nametable = 0;
-						} else {
-							vram_addr.nametable++;
-						}
+		break;
+	}
+	if (!(ppumask.show_bkg || ppumask.show_spr)) {
+		return;
+	}
+
+	if (dot >= 249 && dot <= 256) { //if we are in the last background tile of the scanline
+		return; //don't do anything with the fetch
+	}
+
+	if (dot == 328) {
+		vram_addr.coarse_x = 0; //reset coarse x so it's first 2 tiles again but in next scanline
+	}
+	//increment fine_x_scroll, then check if it wraps around and requires
+	//incrementing coarse_x... then nametable...
+	fine_x_scroll++;
+	if (fine_x_scroll == 8) {
+		fine_x_scroll = 0;
+		if (vram_addr.coarse_x == 31) {
+			vram_addr.coarse_x = 0;
+			if (vram_addr.fine_y_scroll == 7) {
+				vram_addr.fine_y_scroll = 0;
+				if (vram_addr.coarse_y == 31) {
+					vram_addr.coarse_y = 0;
+					if (vram_addr.nametable == 3) {
+						vram_addr.nametable = 0;
 					} else {
-						vram_addr.coarse_y++;
+						vram_addr.nametable++;
 					}
 				} else {
-					vram_addr.fine_y_scroll++;
+					vram_addr.coarse_y++;
 				}
 			} else {
-				vram_addr.coarse_x++;
+				vram_addr.fine_y_scroll++;
 			}
+		} else {
+			vram_addr.coarse_x++;
 		}
+		
 		/*if (vram_addr.coarse_x == 31) {
 			vram_addr.coarse_x = 0;
 			vram_addr.nametable++;
@@ -324,9 +386,13 @@ void create_pixel()
 	uint8_t spr_palette = 0;
 	uint8_t final_pixel = 0;
 	uint8_t final_palette = 0;
+	uint8_t color[3] = { 0 };
 
-	bkg_pixel = (bkg_patt_shift_lo & 0x0001) | (bkg_patt_shift_hi & 0x0001 << 1);
-	bkg_palette = (bkg_attr_shift_lo & 0x01) | (bkg_attr_shift_hi & 0x01 << 1);
+	if (ppumask.show_bkg) {
+		bkg_pixel = (bkg_patt_shift_lo & 0x0001) | ((bkg_patt_shift_hi & 0x0001) << 1);
+		bkg_palette = (bkg_attr_shift_lo & 0x01) | ((bkg_attr_shift_hi & 0x01) << 1); 
+	}
+	
 	if (bkg_pixel != 0) {
 		bkg_pixel = bkg_pixel;
 	}
@@ -351,13 +417,27 @@ void create_pixel()
 			final_palette = spr_palette;
 		}
 	}
-	uint8_t* color = colors[((uint8_t*)palette_ram)[final_palette * 4 + final_pixel]];
+	if (final_pixel) {
+		final_pixel = final_pixel;
+	}
+	if (final_palette) {
+		final_pixel = final_pixel;
+	}
+	color[0] = colors[palette_ram[final_palette * 4 + final_pixel]][0]; //r
+	color[1] = colors[palette_ram[final_palette * 4 + final_pixel]][1]; //g
+	color[2] = colors[palette_ram[final_palette * 4 + final_pixel]][2]; //b
 	al_draw_pixel(dot - 1, scanline, al_map_rgb(color[0], color[1], color[2]));
 	//al_put_pixel(dot - 1, scanline, al_map_rgb(color[0], color[1], color[2]));
 	//display_buffer[(dot - 1) * 3][scanline] = colors[((uint8_t*)palette_ram)[final_palette * 4 + final_pixel]];
-	if (dot - 1 == 255 && scanline == 239) {
+	if (dot == 256 && scanline == 239) {
 		al_flip_display();
 	}
+	if (dot == 255) {
+		vram_addr = vram_addr;
+	}
+	/*if (dot % 8 == 0) {
+		al_flip_display();
+	}*/
 	//set_pixel(dot - 1, scanline, colors[((uint8_t*)palette_ram)[final_palette * 4 + final_pixel]]);
 }
 void fetch_next_scl_sprites()
@@ -395,13 +475,15 @@ void render()
 		//render cycle
 		fetch_next_scl_bkground();
 		create_pixel();
-
+		
 		//now for the reason they are called SHIFT registers...
 		bkg_patt_shift_lo >>= 1;
 		bkg_patt_shift_hi >>= 1;
 	} else if (dot <= 320) {
 		//fetch data for sprites in next scanline
 		fetch_next_scl_sprites();
+		
+		
 	} else if (dot <= 336) {
 		//fetch data for first 2 tiles in next scanline
 		fetch_next_scl_bkground();
@@ -420,7 +502,7 @@ void post_render()
 
 void vertical_blank()
 {
-	if (dot == 1) {
+	if (scanline == 241 && dot == 1) {
 		ppustatus.vblank = 1;
 		if (ppuctrl.gen_nmi) {
 			gen_nmi();

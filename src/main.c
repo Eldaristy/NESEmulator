@@ -14,7 +14,7 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
-	parse_file("C:\\Users\\student\\Desktop\\nestest.nes");
+	parse_file("C:\\Users\\user\\Desktop\\nestests\\donkey_kong.nes");
 	
 	cpu_init();
 	reset();
@@ -29,8 +29,8 @@ int main(int argc, char** argv)
 		cycle();
 		cycle();
 
-		printf("%x, A:%x X:%x Y:%x P:%x SP:%x PC:%x\n",
-			fetched_opcode, context.a, context.x, context.y, context.flags, context.sp, context.pc);
+		/*printf("%x, A:%x X:%x Y:%x P:%x SP:%x PC:%x\n",
+			fetched_opcode, context.a, context.x, context.y, context.flags, context.sp, context.pc);*/
 
 	}
 

@@ -122,7 +122,7 @@ void cpu_bus_wr(uint16_t addr, uint8_t val)
 			ppuaddr.reg = val;
 
 			if (addr_latch == 0) {
-				temp_vram_addr.reg = val << 8 | 0xFF; 
+				temp_vram_addr.reg = (val << 8) | 0xFF; 
 				temp_vram_addr.reg &= 0x3FFF; // clear highest 2 bits
 				addr_latch = 1;
 			}

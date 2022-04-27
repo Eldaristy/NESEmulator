@@ -17,7 +17,7 @@
 //#define PPUDATA 0x2007;
 //#define OAMDMA 0x4014;
 
-uint8_t colors[0x40][3];
+uint8_t colors[0x48][3];
 
 //typedef uint32_t palette;
 uint8_t palette_ram[0x20];

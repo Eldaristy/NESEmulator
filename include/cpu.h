@@ -102,6 +102,11 @@ void i_TSX(); void i_TXA(); void i_TXS(); void i_TYA();
 
 void x_XXX(); // all illegal opcodes
 
+void i_ALR(); void i_ANC(); void i_ANE(); void i_ARR();
+void i_DCP(); void i_ISC(); void i_JAM(); void i_LAS();
+void i_LAX(); void i_RLA(); void i_RRA(); void i_SAX();
+void i_SBX(); void i_SHA(); void i_SHY(); void i_SHX();
+void i_SLO(); void i_SRE(); void i_TAS(); 
 
 
 uint8_t run_clock();
