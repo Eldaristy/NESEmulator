@@ -4,14 +4,17 @@
 #include <stdint.h>
 #include "cpu_bus.h"
 
-static uint8_t set_flags(uint16_t); //recieves uint16_t and not uint8_t in order to handle 8-bit overflows 
-
 void cpu_init();
+
+void cpu_clock();
 
 //hardware interrupts
 void reset();
-static void nmi();
-static void irq();
+void nmi();
+void irq();
+
+uint8_t nmi_line; // Set to 1 if NMI is triggered, else 0
+uint8_t irq_line; // Set to 1 if IRQ is triggered, else 0
 
 /*
 The context of the 6502 microprocessor - all of its registers
@@ -54,10 +57,6 @@ uint16_t result;
 #define SET_D_FLAG(x) 
 #define SET_B_FLAG(x) 
 #define SET_V_FLAG(x) context.flags = (~(context.a ^ fetched_data) & (context.a ^ result) & 0x80) ? SET_FLAG_ON(FLAG_V) : SET_FLAG_OFF(FLAG_V)	  
-//#define SET_V_FLAG(x) context.flags = ((!((context.a - fetched_data) & 0x80) && !(fetched_data & 0x80) && ((context.a - fetched_data) & 0x40 & fetched_data)) \
-										|| (((context.a - fetched_data) & 0x80) && (fetched_data & 0x80) && !((context.a - fetched_data) & 0x40 & fetched_data))) \
-										? SET_FLAG_ON(FLAG_V) : SET_FLAG_OFF(FLAG_V)
-//((context.a ^ result) & (fetched_data ^ result) & 0x80)  ? SET_FLAG_ON(FLAG_V) : SET_FLAG_OFF(FLAG_V)	  
 #define SET_N_FLAG(x) context.flags = (x & 0x80) ? SET_FLAG_ON(FLAG_N) : SET_FLAG_OFF(FLAG_N)
 
 uint8_t cpu_cycles;
@@ -68,7 +67,7 @@ typedef struct {
 	uint8_t cycles;
 } opcode;
 
-static opcode opcode_table[0x100];
+opcode opcode_table[0x100];
 
 /* 
 Addressing modes - "a" stands for addresing
@@ -99,16 +98,11 @@ void i_SEC(); void i_SED(); void i_SEI(); void i_STA();
 void i_STX(); void i_STY(); void i_TAX(); void i_TAY();
 void i_TSX(); void i_TXA(); void i_TXS(); void i_TYA();
 
-
-void x_XXX(); // all illegal opcodes
-
+//illegal instructions
 void i_ALR(); void i_ANC(); void i_ANE(); void i_ARR();
 void i_DCP(); void i_ISC(); void i_JAM(); void i_LAS();
 void i_LAX(); void i_RLA(); void i_RRA(); void i_SAX();
 void i_SBX(); void i_SHA(); void i_SHY(); void i_SHX();
 void i_SLO(); void i_SRE(); void i_TAS(); 
-
-
-uint8_t run_clock();
 
 #endif

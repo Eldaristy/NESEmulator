@@ -21,6 +21,8 @@ opcode opcode_table[0x100] = {
 
 void cpu_init()
 {
+	nmi_line = 0;
+
 	context.a = 0;
 	context.flags = 0;
 	context.flags = SET_FLAG_ON(FLAG_UNUSED);
@@ -41,15 +43,12 @@ void reset()
 	//there are 3 pushes to the stack and that's why I set it to 0xFD.
 	context.sp = 0xFD; 
 
-	context.pc = (uint16_t)cpu_bus_rd(0xFFFC)
-		| ((uint16_t)cpu_bus_rd(0xFFFD) << 8); //RESET vector
+	context.pc = (uint16_t)cpu_bus_rd(0xFFFC);
+	context.pc |= ((uint16_t)cpu_bus_rd(0xFFFD) << 8); //RESET vector
 
 	context.flags = SET_FLAG_ON(FLAG_I);
 
 	cpu_cycles = 8;
-	
-
-	//context.pc = 0xC000;
 }
 
 //does what the BRK instruction does, except for a few differences	
@@ -70,7 +69,7 @@ void nmi()
 }
 
 //similar to NMI interrupt and BRK instructions, but with 2 differences to the BRK
-static void irq()
+void irq()
 {
 	if (!(context.flags & FLAG_I)) { //I flag disables any interrupt except for NMI
 		//1st difference: doesn't increment context.pc
@@ -79,8 +78,8 @@ static void irq()
 		STK_PUSH(context.pc & 0xFF); //low byte
 		STK_PUSH(context.flags | FLAG_UNUSED); //2nd diffrence - doesn't push the B flag set
 
-		context.pc = (uint16_t)cpu_bus_rd(0xFFFE)
-			| ((uint16_t)cpu_bus_rd(0xFFFF) << 8); //IRQ/BRK vector
+		context.pc = (uint16_t)cpu_bus_rd(0xFFFE);
+		context.pc |= ((uint16_t)cpu_bus_rd(0xFFFF) << 8); //IRQ/BRK vector
 
 		context.flags = SET_FLAG_ON(FLAG_I);
 
@@ -88,54 +87,23 @@ static void irq()
 	}
 }
 
-uint8_t run_clock()
+void cpu_clock()
 {
-	/*cpu_init();
-
-	effective_addr = 0;
-	fetched_opcode = 0;
-	fetched_data = 0;
-
-	reset();
-	while(1)*/ //{
-	//cpu_cycles = 0;
 	if (cpu_cycles == 0) {
 		fetched_opcode = cpu_bus_rd(context.pc);
 		cpu_cycles = opcode_table[fetched_opcode].cycles;
 		opcode_table[fetched_opcode].addressing_mode();
 		opcode_table[fetched_opcode].instruction();
+		//check for hardware interrupts
 		if (nmi_line) {
-			nmi();
+ 			nmi();
 			nmi_line = 0;
-		}
-		if (context.pc == 0xF1B4) {
-			result = result;
-		}
-		if (context.pc == 0xF1EC) {
-			result = result;
-		}
-		if (opcode_table[fetched_opcode].instruction == i_JMP) {
-			result = result;
-		}
-		if (context.pc == 0xF28A) {
-			result = result;
-		}
-		if (context.pc == 0xEDE2) {
-			result = result;
-		}
-		if (cpu_ram[0x11] == 0xfb) {
-			result = result;
-		}
-		if (cpu_ram[0x0] == 0xbe) {
-			result = result;
+		} else if (irq_line) {
+			irq();
+			irq_line = 0;
 		}
 	}
 	cpu_cycles--;
-	
-	
-	//}
-
-	//check for nmi or irq
 }
 void a_ACC()
 {
@@ -606,7 +574,7 @@ void i_RTI() {
 void i_RTS() {
 	STK_POP((uint8_t)result); //low byte
 	STK_POP((uint8_t)context.pc); //high byte
-	context.pc = result | (context.pc << 8);
+	context.pc = (result & 0xFF) | (context.pc << 8);
 	context.pc++; //because in JSR we push the return address - 1
 } 
 void i_SBC() {
@@ -850,7 +818,6 @@ void i_SLO()
 
 	SET_C_FLAG(result);
 
-
 	result = context.a | (uint8_t)result;
 	context.a = result;
 
@@ -879,7 +846,3 @@ void i_TAS()
 	cpu_bus_wr(effective_addr, (uint8_t)result);
 }
 
-void x_XXX()
-{
-
-}

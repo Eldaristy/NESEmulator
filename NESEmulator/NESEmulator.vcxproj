@@ -163,21 +163,25 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\include\apu.h" />
     <ClInclude Include="..\include\cartidge.h" />
+    <ClInclude Include="..\include\controller.h" />
     <ClInclude Include="..\include\cpu.h" />
     <ClInclude Include="..\include\cpu_bus.h" />
+    <ClInclude Include="..\include\display.h" />
     <ClInclude Include="..\include\mappers\mapper000.h" />
     <ClInclude Include="..\include\ppu.h" />
     <ClInclude Include="..\include\ppu_bus.h" />
-    <ClInclude Include="..\src\multimedia\display.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\apu.c" />
     <ClCompile Include="..\src\cartidge.c" />
+    <ClCompile Include="..\src\controller.c" />
     <ClCompile Include="..\src\cpu.c" />
     <ClCompile Include="..\src\cpu_bus.c" />
+    <ClCompile Include="..\src\display.c" />
     <ClCompile Include="..\src\main.c" />
     <ClCompile Include="..\src\mappers\mapper000.c" />
-    <ClCompile Include="..\src\multimedia\display.c" />
     <ClCompile Include="..\src\ppu.c" />
     <ClCompile Include="..\src\ppu_bus.c" />
   </ItemGroup>

@@ -27,13 +27,19 @@
     <ClInclude Include="..\include\ppu_bus.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\multimedia\display.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\cartidge.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\include\mappers\mapper000.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\apu.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\display.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\controller.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -53,13 +59,19 @@
     <ClCompile Include="..\src\main.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\multimedia\display.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\cartidge.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\mappers\mapper000.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\apu.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\display.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\controller.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

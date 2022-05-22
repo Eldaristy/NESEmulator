@@ -85,7 +85,7 @@ void ppu_init()
 	oamdma.reg = 0;
 
 	dot = 0;
-	scanline = 0;
+	scanline = -1;
 
 	vram_addr.reg = 0;
 	temp_vram_addr.reg = 0;
@@ -105,46 +105,15 @@ void ppu_init()
 
 void load_bkg_shifts()
 {
-	uint8_t mod_coarse_x = vram_addr.coarse_x & 3; //same as "% 2", just wanted to use bit-wise
+	uint8_t mod_coarse_x = (vram_addr.coarse_x - 2) & 3; //same as "% 2", just wanted to use bit-wise
 	uint8_t mod_coarse_y = vram_addr.coarse_y & 3;
-	
-	
-	if (patt_tbl_lo != 0 || patt_tbl_hi != 0) {
-		patt_tbl_hi = patt_tbl_hi;
-	}
 
-	//that's a nice one... reversing the bits is essential since we use the low bits of the shift registers
-	//to draw the pixels each time (and then shift them right). Originally, the pattern bits
-	//
-	//reverse all the bits of patt_tbl_lo
-	patt_tbl_lo = (patt_tbl_lo & 0x7E) | ((patt_tbl_lo & 0x80) >> 7) | ((patt_tbl_lo & 0x01) << 7);
-	patt_tbl_lo = (patt_tbl_lo & 0xBD) | ((patt_tbl_lo & 0x40) >> 5) | ((patt_tbl_lo & 0x02) << 5);
-	patt_tbl_lo = (patt_tbl_lo & 0xDB) | ((patt_tbl_lo & 0x20) >> 3) | ((patt_tbl_lo & 0x04) << 3);
-	patt_tbl_lo = (patt_tbl_lo & 0xE7) | ((patt_tbl_lo & 0x10) >> 1) | ((patt_tbl_lo & 0x08) << 1);
+	reverse_bits(&patt_tbl_lo);
+	reverse_bits(&patt_tbl_hi);
 
-	patt_tbl_hi = (patt_tbl_hi & 0x7E) | ((patt_tbl_hi & 0x80) >> 7) | ((patt_tbl_hi & 0x01) << 7);
-	patt_tbl_hi = (patt_tbl_hi & 0xBD) | ((patt_tbl_hi & 0x40) >> 5) | ((patt_tbl_hi & 0x02) << 5);
-	patt_tbl_hi = (patt_tbl_hi & 0xDB) | ((patt_tbl_hi & 0x20) >> 3) | ((patt_tbl_hi & 0x04) << 3);
-	patt_tbl_hi = (patt_tbl_hi & 0xE7) | ((patt_tbl_hi & 0x10) >> 1) | ((patt_tbl_hi & 0x08) << 1);
+	bkg_patt_shift_lo = (bkg_patt_shift_lo & 0xFF) | ((uint16_t)(patt_tbl_lo) << 8);
+	bkg_patt_shift_hi = (bkg_patt_shift_hi & 0xFF) | ((uint16_t)(patt_tbl_hi) << 8);
 
-	//patt_tbl_lo = ((patt_tbl_lo & 0xF0) >> 4) | ((patt_tbl_lo & 0x0F) << 4);
-	//patt_tbl_lo = ((patt_tbl_lo & 0xCC) >> 2) | ((patt_tbl_lo & 0x33) << 2);
-	//patt_tbl_lo = ((patt_tbl_lo & 0xAA) >> 1) | ((patt_tbl_lo & 0x55) << 1);
-
-	////reverse all the bits of patt_tbl_hi
-	//patt_tbl_hi = ((patt_tbl_hi & 0xF0) >> 4) | ((patt_tbl_hi & 0x0F) << 4);
-	//patt_tbl_hi = ((patt_tbl_hi & 0xCC) >> 2) | ((patt_tbl_hi & 0x33) << 2);
-	//patt_tbl_hi = ((patt_tbl_hi & 0xAA) >> 1) | ((patt_tbl_lo & 0x55) << 1);
-
-	bkg_patt_shift_lo = bkg_patt_shift_lo & 0xFF | ((uint16_t)(patt_tbl_lo) << 8);
-	bkg_patt_shift_hi = bkg_patt_shift_hi & 0xFF | ((uint16_t)(patt_tbl_hi) << 8);
-
-	//bkg_patt_shift_lo = (bkg_patt_shift_lo << 8) | ((patt_tbl_lo) & 0xFF);
-	//bkg_patt_shift_hi = (bkg_patt_shift_hi << 8) | ((patt_tbl_hi) & 0xFF);
-
-	if (bkg_patt_shift_lo != 0 || bkg_patt_shift_hi != 0) {
-		bkg_attr_shift_lo = bkg_attr_shift_lo;
-	}
 	if (mod_coarse_y == 0 || mod_coarse_y == 1) { //top
 		if (mod_coarse_x == 0 || mod_coarse_x == 1) { //top-left
 			bkg_attr_shift_lo = attr_tbl_id & 0x01;
@@ -163,28 +132,49 @@ void load_bkg_shifts()
 			bkg_attr_shift_hi = (attr_tbl_id & 0x80) >> 7;
 		}
 	}
+	if (bkg_attr_shift_lo) {
+		bkg_attr_shift_lo = 0xFF;
+	}
+	if (bkg_attr_shift_hi) {
+		bkg_attr_shift_hi = 0xFF;
+	}
 }
-void load_spr_shifts()
-{
 
+//that's a nice one... reversing the bits is essential since we use the low bits of the shift registers
+//to draw the pixels each time (and then shift them right).
+void reverse_bits(uint8_t* pointer)
+{
+	*pointer = (*pointer & 0x7E) | ((*pointer & 0x80) >> 7) | ((*pointer & 0x01) << 7);
+	*pointer = (*pointer & 0xBD) | ((*pointer & 0x40) >> 5) | ((*pointer & 0x02) << 5); 
+	*pointer = (*pointer & 0xDB) | ((*pointer & 0x20) >> 3) | ((*pointer & 0x04) << 3); 
+	*pointer = (*pointer & 0xE7) | ((*pointer & 0x10) >> 1) | ((*pointer & 0x08) << 1);
 }
 
 void pre_render()
 {
 	if (dot == 0) {
 		ppustatus.vblank = 0;
-		if (ppumask.show_bkg || ppumask.show_spr) {
-			vram_addr.reg = temp_vram_addr.reg;
+	} else if (dot == 1) {
+		ppustatus.spr_overflow = 0;
+		ppustatus.spr_zero = 0;
+		spr_zero_might_hit = true;
+		for (uint8_t i = 0; i < 8; i++) {
+			spr_patt_shift_lo[i] = 0;
+			spr_patt_shift_hi[i] = 0;
 		}
-		//vram_addr.reg = 0;
-		//vram_addr.nametable = 0;
+	} else if (dot == 280) {
+		if (ppumask.show_bkg || ppumask.show_spr) {
+			vram_addr.coarse_y = temp_vram_addr.coarse_y;
+			vram_addr.nametable_y = temp_vram_addr.nametable_y;
+			vram_addr.fine_y_scroll = temp_vram_addr.fine_y_scroll;
+		}
 	} else if (dot >= 321 && dot <= 336) {
 	//fetch data for first 2 tiles in next scanline
 		fetch_next_scl_bkground();
 
 		bkg_patt_shift_lo >>= 1;
 		bkg_patt_shift_hi >>= 1;
-	}
+	} 
 }
 
 void fetch_next_scl_bkground()
@@ -196,18 +186,17 @@ void fetch_next_scl_bkground()
 		//fetch pattern table byte
 		patt_tbl_id = ppu_bus_rd(NAMETABLES_START
 			| (vram_addr.reg & 0x0FFF));
-		if (patt_tbl_id != 0 && patt_tbl_id != 0x24) {
-			patt_tbl_id = patt_tbl_id;
-		}
 		break;
 
 	case 2:
 		//fetch attribute table byte
+
 		attr_tbl_id = ppu_bus_rd(NAMETABLES_START
 			| (NAMETABLE_SIZE - 0x40)
-			| (vram_addr.nametable << 11)
+			| ((vram_addr.nametable_x | (vram_addr.nametable_y << 1)) << 11)
 			| ((vram_addr.coarse_y >> 2) << 3)
-			| (vram_addr.coarse_x >> 2));
+			| ((vram_addr.coarse_x - 1) >> 2));
+
 		break;
 
 	case 4:
@@ -223,180 +212,110 @@ void fetch_next_scl_bkground()
 		break;
 
 	case 7:
-		if (patt_tbl_hi || patt_tbl_lo) {
-			patt_tbl_hi = patt_tbl_hi;
-
+		if (dot >= 249 && dot <= 256) { //if we are in the last background tile of the scanline
+			return; //don't do anything with the fetch
 		}
-		break;
-	}
-	if (!(ppumask.show_bkg || ppumask.show_spr)) {
-		return;
-	}
-
-	if (dot >= 249 && dot <= 256) { //if we are in the last background tile of the scanline
-		return; //don't do anything with the fetch
-	}
-
-	if (dot == 328) {
-		vram_addr.coarse_x = 0; //reset coarse x so it's first 2 tiles again but in next scanline
-	}
-	//increment fine_x_scroll, then check if it wraps around and requires
-	//incrementing coarse_x... then nametable...
-	fine_x_scroll++;
-	if (fine_x_scroll == 8) {
-		fine_x_scroll = 0;
-		if (vram_addr.coarse_x == 31) {
-			vram_addr.coarse_x = 0;
-			if (vram_addr.fine_y_scroll == 7) {
-				vram_addr.fine_y_scroll = 0;
-				if (vram_addr.coarse_y == 31) {
-					vram_addr.coarse_y = 0;
-					if (vram_addr.nametable == 3) {
-						vram_addr.nametable = 0;
-					} else {
-						vram_addr.nametable++;
-					}
-				} else {
-					vram_addr.coarse_y++;
-				}
-			} else {
-				vram_addr.fine_y_scroll++;
+		if (ppumask.show_bkg || ppumask.show_spr) {
+			if (vram_addr.coarse_x == 31) {
+				vram_addr.coarse_x = 0;
+				vram_addr.nametable_x = ~vram_addr.nametable_x;
 			}
-		} else {
-			vram_addr.coarse_x++;
+			else {
+				vram_addr.coarse_x++;
+			}
 		}
 		
-		/*if (vram_addr.coarse_x == 31) {
-			vram_addr.coarse_x = 0;
-			vram_addr.nametable++;
-		}
-		if (vram_addr.nametable == 3) {
-			vram_addr.nametable = 0;
-		}
-		break;*/
+		break;
 	}
 }
 void evaluate_sprites()
 {
-	assert("not implemented");
-
-	int8_t diff = 0;
+	int16_t diff = 0;
 	primary_oam_counter = 0;
 	secondary_oam_counter = 0;
-
+	if (scanline == 176) {
+		scanline = scanline;
+	}
 	for (uint8_t i = 0; i < 8; i++) {
-		secondary_oam[i] = (sprite){ 0xFF, 0xFF, 0xFF, 0xFF };
+		memset(&(secondary_oam[i]), 0xFFFFFFFF, sizeof(uint8_t) * 4);
 	}
 
-	while (primary_oam_counter / 4 < 64 && secondary_oam_counter / 4 < 8) {
-		secondary_oam[secondary_oam_counter / 4] = primary_oam[primary_oam_counter / 4];
-		diff = scanline - secondary_oam[secondary_oam_counter * 4].y_top;
-		if ((diff >= 0 && diff < 8 && !ppuctrl.spr_size)
-			| (diff >= 0 && diff < 16 && ppuctrl.spr_size)) {
-			secondary_oam_counter += 4;
+	while (primary_oam_counter / 4 < 64 && secondary_oam_counter / 4 < 9) {
+		((uint8_t*)secondary_oam)[secondary_oam_counter] = ((uint8_t*)primary_oam)[primary_oam_counter];
+		diff = scanline + 1 - ((int16_t)(secondary_oam[secondary_oam_counter / 4].y_top));
+		if (scanline == 0xcd) {
+			diff = diff;
+		}
+		if (scanline == 0xce) {
+			diff = diff;
+		}
+		if ((diff >= 0 && diff <= 7 && !ppuctrl.spr_size)
+			| (diff >= 0 && diff <= 15 && ppuctrl.spr_size)) {
+			if (secondary_oam_counter < 32) {
+				
+				secondary_oam[secondary_oam_counter / 4] = primary_oam[primary_oam_counter / 4];
+				//secondary_oam[secondary_oam_counter / 4].y_top++;
+				secondary_oam_counter += 4;
+				ppustatus.spr_overflow = 0;
+			} else {
+				ppustatus.spr_overflow = 1;
+			}
 		}
 
 		primary_oam_counter += 4;
+		
 	}
-
-	//int8_t diff = 0;
-
-	//assert(!"not implemented");
-	//if (dot >= 1 && dot <= 64) {
-	//	for (uint8_t i = 0; i < 8; i++) {
-	//		secondary_oam[i] = (sprite){ 0xFF, 0xFF, 0xFF, 0xFF };
-	//	}
-	//} else if (dot <= 256) {
-	//	switch (dot % 2) {
-	//	case 1:
-	//		if (secondary_oam_counter / 4 < 8) {
-	//			oam_temp = ((uint8_t*)primary_oam)[primary_oam_counter];
-	//			break;
-	//		} //else - "disable" writing to secondary_oam by simply not reading anything
-	//			//so it writes the last value written to secondary_oam.
-	//		
-	//	
-	//	case 0:
-	//		//"1"
-	//		if (dot == 66) {
-	//			primary_oam_counter = 0; //initialize primary_oam_counter
-	//		}
-	//		if (primary_oam_counter % 4) {
-	//			((uint8_t*)secondary_oam)[secondary_oam_counter] = oam_temp;
-	//			primary_oam_counter++;
-	//			secondary_oam_counter++;
-
-	//			return;
-	//		}
-
-	//		((uint8_t*)secondary_oam)[secondary_oam_counter] = oam_temp; 
-
-	//		//+1 because next scanline
-	//		diff = scanline + 1 - secondary_oam[secondary_oam_counter * 4].y_top; 
-	//		
-	//		//check if sprite in range (y axis)
-	//		if ((diff >= 0 && diff < 8 && !ppuctrl.spr_size)
-	//			| (diff >= 0 && diff < 16 && ppuctrl.spr_size)) {
-	//			primary_oam_counter++;
-	//			secondary_oam_counter++;
-
-	//			return;
-	//		}
-	//		
-	//		//"2"
-	//		if (primary_oam_counter * 4 == 63) //all sprites evaluated
-	//		{
-	//			primary_oam_counter += 4; 
-	//			//4
-	//		} else {
-	//			primary_oam_counter += 4; //advance to the next sprite in primary_oam
-	//			if (secondary_oam_counter / 4 < 8) {
-	//				return;
-	//			}
-
-	//			//3
-
-	//		}
-	//		
-
-
-	//		if (1) {
-
-	//		} else if (secondary_oam_counter < 8) {
-	//			
-	//		} else { //secondary_oam_counter == 8
-
-	//		}
-
-	//		oam_temp = secondary_oam[7]; //"ignore" the write
-	//		
-
-	//		//"2"
-	//		primary_oam_counter++;
-	//	}
-	//} else if (dot <= 320) {
-	//	primary_oam_counter = 0;
-	//}
 }
 void create_pixel()
 {
 	uint8_t bkg_pixel = 0;
 	uint8_t bkg_palette = 0;
+	uint8_t bkg_scroll_mask = 0;
 	uint8_t spr_pixel = 0; 
 	uint8_t spr_palette = 0;
 	uint8_t final_pixel = 0;
 	uint8_t final_palette = 0;
 	uint8_t color[3] = { 0 };
 
+	bkg_scroll_mask = 0x0001 << fine_x_scroll;
+	if (dot == 0x59) {
+		dot = dot;
+	}
 	if (ppumask.show_bkg) {
-		bkg_pixel = (bkg_patt_shift_lo & 0x0001) | ((bkg_patt_shift_hi & 0x0001) << 1);
+		bkg_pixel = ((bkg_patt_shift_lo & bkg_scroll_mask) > 0) | (((bkg_patt_shift_hi & bkg_scroll_mask) > 0) << 1);
 		bkg_palette = (bkg_attr_shift_lo & 0x01) | ((bkg_attr_shift_hi & 0x01) << 1); 
 	}
-	
-	if (bkg_pixel != 0) {
-		bkg_pixel = bkg_pixel;
+
+	for (uint8_t i = 0; i < 8; i++) {	
+		if (
+			secondary_oam[i].y_top < 240
+			&& (uint8_t)(dot - 1) - (uint8_t)(secondary_oam[i].x_left) >= 0
+			&& (uint8_t)(dot - 1) - (uint8_t)(secondary_oam[i].x_left) <= 7) {// IMPORTANT: IN BALLOON FIGHT: && secondary_oam[i].y_top != 0xf0) {
+			spr_pixel = (spr_patt_shift_lo[i] & 0x01) | ((spr_patt_shift_hi[i] & 0x01) << 1);
+			spr_patt_shift_lo[i] >>= 1;
+			spr_patt_shift_hi[i] >>= 1;
+
+			if (i == 0 && spr_zero_might_hit
+				&& spr_pixel != 0 && bkg_pixel != 0
+				&& ppumask.show_bkg && ppumask.show_spr) {
+				is_spr_zero_rendered = true;
+				if (!(ppumask.show_bkg_left || ppumask.show_spr_left) && is_spr_zero_rendered) {
+					if (dot >= 9 && dot < 258) {
+						spr_zero_might_hit = false;
+ 						ppustatus.spr_zero = 1;
+					}
+				} else if(is_spr_zero_rendered){
+					if (dot >= 1 && dot < 258) {
+						spr_zero_might_hit = false;
+						ppustatus.spr_zero = 1;
+					}
+				}
+				
+			}
+			break;
+		} 
 	}
-	spr_pixel = 0; //not implemented yet...
+
 	spr_palette = secondary_oam[current_spr_index].attr.palette + 4;
 
 	if (bkg_pixel == 0 && spr_pixel == 0) {
@@ -417,79 +336,146 @@ void create_pixel()
 			final_palette = spr_palette;
 		}
 	}
-	if (final_pixel) {
-		final_pixel = final_pixel;
+
+	if (final_pixel == 0) {
+		final_palette = 0;
 	}
-	if (final_palette) {
-		final_pixel = final_pixel;
-	}
-	color[0] = colors[palette_ram[final_palette * 4 + final_pixel]][0]; //r
-	color[1] = colors[palette_ram[final_palette * 4 + final_pixel]][1]; //g
-	color[2] = colors[palette_ram[final_palette * 4 + final_pixel]][2]; //b
-	al_draw_pixel(dot - 1, scanline, al_map_rgb(color[0], color[1], color[2]));
-	//al_put_pixel(dot - 1, scanline, al_map_rgb(color[0], color[1], color[2]));
-	//display_buffer[(dot - 1) * 3][scanline] = colors[((uint8_t*)palette_ram)[final_palette * 4 + final_pixel]];
+	memcpy(color, colors[palette_ram[final_palette * 4 + final_pixel]], 3 * sizeof(uint8_t));
+	al_draw_pixel(dot, scanline + 1, al_map_rgb(color[0], color[1], color[2]));
 	if (dot == 256 && scanline == 239) {
+		al_set_target_backbuffer(display);
+		al_draw_scaled_bitmap(bitmap, 0, 0, 256, 240, 0, 0, 256 * WINDOW_SCALE, 240 * WINDOW_SCALE, NULL);
 		al_flip_display();
+		al_set_target_bitmap(bitmap);
+		run_controller();
 	}
-	if (dot == 255) {
-		vram_addr = vram_addr;
-	}
-	/*if (dot % 8 == 0) {
-		al_flip_display();
-	}*/
-	//set_pixel(dot - 1, scanline, colors[((uint8_t*)palette_ram)[final_palette * 4 + final_pixel]]);
 }
 void fetch_next_scl_sprites()
 {
+	uint8_t temp = 0;
 	//here the structure is very similar to the one of fetch_next_scl_bkground(), but even simpler
-	switch (dot - 1 % 8) {
+	switch ((dot - 1) & 0x07) {
 	case 0:
-		load_spr_shifts();
-
+		is_spr_zero_rendered = false;
 		//fetch garbage data
-		break;
+		break; 
 
 	case 2:
 		//fetch garbage data
 		break;
 
 	case 4:
-		spr_patt_shift_lo[primary_oam_counter] = ppu_bus_rd(ppuctrl.spr_pattern_table << 12
-			| (uint16_t)(secondary_oam[primary_oam_counter].tile_index) << 4
-			| scanline - secondary_oam[primary_oam_counter].y_top);
+		temp = scanline + 1 - secondary_oam[secondary_oam_counter / 4].y_top;
+		if (scanline == 0xb0) {
+			scanline = scanline;
+		}
+		switch (temp) {
+		case 1:
+			temp = temp;
+			break;
+		case 2:
+			temp = temp;
+			break;
+		case 3:
+			temp = temp;
+			break;
+		case 4:
+			temp = temp;
+			break;
+		case 5:
+			temp = temp;
+			break;
+		case 6:
+			temp = temp;
+			break;
+		case 7:
+			temp = temp;
+			break;
+		case 8:
+			temp = temp;
+			break;
+		} 
+
+		spr_patt_shift_lo[secondary_oam_counter / 4] = ppu_bus_rd((ppuctrl.spr_pattern_table << 12)
+			| (secondary_oam[secondary_oam_counter / 4].tile_index << 4)
+			| (((scanline - secondary_oam[secondary_oam_counter / 4].y_top) & 0x07)));
+		if (!(secondary_oam[secondary_oam_counter / 4].attr.reg & 0x40)) {
+			reverse_bits(&(spr_patt_shift_lo[secondary_oam_counter / 4]));
+		}
+		
 		break;
 
 	case 6:
-		spr_patt_shift_lo[primary_oam_counter] = ppu_bus_rd(ppuctrl.spr_pattern_table << 12
-			| (uint16_t)(secondary_oam[primary_oam_counter].tile_index) << 4
-			| scanline - secondary_oam[primary_oam_counter].y_top + 8);
+		spr_patt_shift_hi[secondary_oam_counter / 4] = ppu_bus_rd((ppuctrl.spr_pattern_table << 12)
+			| (secondary_oam[secondary_oam_counter / 4].tile_index << 4)
+			| (((scanline - secondary_oam[secondary_oam_counter / 4].y_top) & 0x07) + 8));
+		if (!(secondary_oam[secondary_oam_counter / 4].attr.reg & 0x40)) {
+			reverse_bits(&(spr_patt_shift_hi[secondary_oam_counter / 4]));
+		}
+
+		secondary_oam_counter += 4;
 		break;
 	}
 }
 void render()
 {
 	if (dot == 0) {
-		//idle cycle
+		//idle cycle, but lets just put the sprite evaluation in one hit there...
+		
+		secondary_oam_counter = 0;
 	} else if (dot <= 256) {
 		//render cycle
 		fetch_next_scl_bkground();
 		create_pixel();
 		
+		if (dot == 256) {
+			if (ppumask.show_bkg || ppumask.show_spr) {
+				
+				if (vram_addr.fine_y_scroll == 7) {
+					vram_addr.fine_y_scroll = 0;
+					if (vram_addr.coarse_y == 29) {
+						vram_addr.coarse_y = 0;
+						vram_addr.nametable_y = ~vram_addr.nametable_y;
+					}
+					else {
+						vram_addr.coarse_y++;
+					}
+				}
+				else {
+					vram_addr.fine_y_scroll++;
+				}
+			}
+			
+		}
 		//now for the reason they are called SHIFT registers...
-		bkg_patt_shift_lo >>= 1;
-		bkg_patt_shift_hi >>= 1;
+		//shift them after we draw the pixel
+		if (ppumask.show_bkg) {
+			bkg_patt_shift_lo >>= 1;
+			bkg_patt_shift_hi >>= 1;
+		}
+		
+
 	} else if (dot <= 320) {
+		if (dot == 257) {
+			if (ppumask.show_bkg || ppumask.show_spr) {
+				vram_addr.coarse_x = temp_vram_addr.coarse_x;
+				vram_addr.nametable_x = temp_vram_addr.nametable_x;
+			}
+			
+		}
 		//fetch data for sprites in next scanline
 		fetch_next_scl_sprites();
 		
-		
 	} else if (dot <= 336) {
+		if (dot == 336) {
+			evaluate_sprites();
+		}
 		//fetch data for first 2 tiles in next scanline
 		fetch_next_scl_bkground();
-
-		bkg_patt_shift_lo >>= 1;
-		bkg_patt_shift_hi >>= 1;
+		if (ppumask.show_bkg) {
+			bkg_patt_shift_lo >>= 1;
+			bkg_patt_shift_hi >>= 1;
+		}
 	} else {
 		//do nothing (purpose of cycles 337-340 are unknown and probably not impactful)
 	}
@@ -510,15 +496,14 @@ void vertical_blank()
 	}
 }
 
-void cycle()
+void ppu_clock()
 {
 	if (scanline == -1) {
-		//dummy
+		//dummy scanline
 		pre_render();
 	}
 	else if (scanline <= 239) {
 		//visible scanline
-		//evaluate_sprites();
 		render();
 	}
 	else if (scanline == 240) {
@@ -535,14 +520,5 @@ void cycle()
 		dot = 0;
 		scanline++;
 		scanline = (scanline == 261) ? -1 : scanline;
-	}
-}
-
-void run_ppu()
-{
-	ppu_init();
-	create_window();
-	while (1) {
-		cycle();
 	}
 }
