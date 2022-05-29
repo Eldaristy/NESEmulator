@@ -233,7 +233,7 @@ void evaluate_sprites()
 	int16_t diff = 0;
 	primary_oam_counter = 0;
 	secondary_oam_counter = 0;
-	if (scanline == 176) {
+	if (scanline == 0x17+7) {
 		scanline = scanline;
 	}
 	for (uint8_t i = 0; i < 8; i++) {
@@ -242,11 +242,8 @@ void evaluate_sprites()
 
 	while (primary_oam_counter / 4 < 64 && secondary_oam_counter / 4 < 9) {
 		((uint8_t*)secondary_oam)[secondary_oam_counter] = ((uint8_t*)primary_oam)[primary_oam_counter];
-		diff = scanline + 1 - ((int16_t)(secondary_oam[secondary_oam_counter / 4].y_top));
+		diff = scanline + 1 - ((int16_t)((secondary_oam[secondary_oam_counter / 4].y_top)));
 		if (scanline == 0xcd) {
-			diff = diff;
-		}
-		if (scanline == 0xce) {
 			diff = diff;
 		}
 		if ((diff >= 0 && diff <= 7 && !ppuctrl.spr_size)
@@ -263,7 +260,6 @@ void evaluate_sprites()
 		}
 
 		primary_oam_counter += 4;
-		
 	}
 }
 void create_pixel()
@@ -278,6 +274,9 @@ void create_pixel()
 	uint8_t color[3] = { 0 };
 
 	bkg_scroll_mask = 0x0001 << fine_x_scroll;
+	if (scanline == 0xd0) {
+		scanline = scanline;
+	}
 	if (dot == 0x59) {
 		dot = dot;
 	}
@@ -289,8 +288,8 @@ void create_pixel()
 	for (uint8_t i = 0; i < 8; i++) {	
 		if (
 			secondary_oam[i].y_top < 240
-			&& (uint8_t)(dot - 1) - (uint8_t)(secondary_oam[i].x_left) >= 0
-			&& (uint8_t)(dot - 1) - (uint8_t)(secondary_oam[i].x_left) <= 7) {// IMPORTANT: IN BALLOON FIGHT: && secondary_oam[i].y_top != 0xf0) {
+			&& (uint8_t)(dot - 1) - (uint8_t)(spr_counters[i]) >= 0
+			&& (uint8_t)(dot - 1) - (uint8_t)(spr_counters[i]) <= 7) {// IMPORTANT: IN BALLOON FIGHT: && secondary_oam[i].y_top != 0xf0) {
 			spr_pixel = (spr_patt_shift_lo[i] & 0x01) | ((spr_patt_shift_hi[i] & 0x01) << 1);
 			spr_patt_shift_lo[i] >>= 1;
 			spr_patt_shift_hi[i] >>= 1;
@@ -365,8 +364,8 @@ void fetch_next_scl_sprites()
 		break;
 
 	case 4:
-		temp = scanline + 1 - secondary_oam[secondary_oam_counter / 4].y_top;
-		if (scanline == 0xb0) {
+		temp = scanline - secondary_oam[secondary_oam_counter / 4].y_top;
+		if (scanline == 0xd0) {
 			scanline = scanline;
 		}
 		switch (temp) {
@@ -398,7 +397,7 @@ void fetch_next_scl_sprites()
 
 		spr_patt_shift_lo[secondary_oam_counter / 4] = ppu_bus_rd((ppuctrl.spr_pattern_table << 12)
 			| (secondary_oam[secondary_oam_counter / 4].tile_index << 4)
-			| (((scanline - secondary_oam[secondary_oam_counter / 4].y_top) & 0x07)));
+			| (((scanline + 1 - secondary_oam[secondary_oam_counter / 4].y_top) & 0x07)));
 		if (!(secondary_oam[secondary_oam_counter / 4].attr.reg & 0x40)) {
 			reverse_bits(&(spr_patt_shift_lo[secondary_oam_counter / 4]));
 		}
@@ -408,7 +407,7 @@ void fetch_next_scl_sprites()
 	case 6:
 		spr_patt_shift_hi[secondary_oam_counter / 4] = ppu_bus_rd((ppuctrl.spr_pattern_table << 12)
 			| (secondary_oam[secondary_oam_counter / 4].tile_index << 4)
-			| (((scanline - secondary_oam[secondary_oam_counter / 4].y_top) & 0x07) + 8));
+			| (((scanline + 1 - secondary_oam[secondary_oam_counter / 4].y_top) & 0x07) + 8));
 		if (!(secondary_oam[secondary_oam_counter / 4].attr.reg & 0x40)) {
 			reverse_bits(&(spr_patt_shift_hi[secondary_oam_counter / 4]));
 		}
@@ -421,7 +420,7 @@ void render()
 {
 	if (dot == 0) {
 		//idle cycle, but lets just put the sprite evaluation in one hit there...
-		
+		evaluate_sprites();
 		secondary_oam_counter = 0;
 	} else if (dot <= 256) {
 		//render cycle
@@ -461,14 +460,16 @@ void render()
 				vram_addr.coarse_x = temp_vram_addr.coarse_x;
 				vram_addr.nametable_x = temp_vram_addr.nametable_x;
 			}
-			
+			for (uint8_t i = 0; i < 8; i++) {
+				spr_counters[i] = secondary_oam[i].x_left;
+			}
 		}
 		//fetch data for sprites in next scanline
 		fetch_next_scl_sprites();
 		
 	} else if (dot <= 336) {
 		if (dot == 336) {
-			evaluate_sprites();
+			
 		}
 		//fetch data for first 2 tiles in next scanline
 		fetch_next_scl_bkground();
