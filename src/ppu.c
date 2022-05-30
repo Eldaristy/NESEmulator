@@ -242,7 +242,7 @@ void evaluate_sprites()
 
 	while (primary_oam_counter / 4 < 64 && secondary_oam_counter / 4 < 9) {
 		((uint8_t*)secondary_oam)[secondary_oam_counter] = ((uint8_t*)primary_oam)[primary_oam_counter];
-		diff = scanline + 1 - ((int16_t)((secondary_oam[secondary_oam_counter / 4].y_top)));
+		diff = scanline + 1 - ((int16_t)(++(secondary_oam[secondary_oam_counter / 4].y_top)));
 		if (scanline == 0xcd) {
 			diff = diff;
 		}
@@ -251,7 +251,7 @@ void evaluate_sprites()
 			if (secondary_oam_counter < 32) {
 				
 				secondary_oam[secondary_oam_counter / 4] = primary_oam[primary_oam_counter / 4];
-				//secondary_oam[secondary_oam_counter / 4].y_top++;
+				secondary_oam[secondary_oam_counter / 4].y_top++;
 				secondary_oam_counter += 4;
 				ppustatus.spr_overflow = 0;
 			} else {
@@ -274,10 +274,10 @@ void create_pixel()
 	uint8_t color[3] = { 0 };
 
 	bkg_scroll_mask = 0x0001 << fine_x_scroll;
-	if (scanline == 0xd0) {
+	if (scanline == 0x1f) {
 		scanline = scanline;
 	}
-	if (dot == 0x59) {
+	if (dot == 0x58) {
 		dot = dot;
 	}
 	if (ppumask.show_bkg) {
@@ -285,11 +285,10 @@ void create_pixel()
 		bkg_palette = (bkg_attr_shift_lo & 0x01) | ((bkg_attr_shift_hi & 0x01) << 1); 
 	}
 
-	for (uint8_t i = 0; i < 8; i++) {	
-		if (
-			secondary_oam[i].y_top < 240
-			&& (uint8_t)(dot - 1) - (uint8_t)(spr_counters[i]) >= 0
-			&& (uint8_t)(dot - 1) - (uint8_t)(spr_counters[i]) <= 7) {// IMPORTANT: IN BALLOON FIGHT: && secondary_oam[i].y_top != 0xf0) {
+	for (uint8_t i = 0; i < 8; i++) {
+		if (secondary_oam[i].y_top < 240
+			&& ((uint8_t)(dot - 1) - (uint8_t)(spr_counters[i]) >= 0)
+			&& (uint8_t)(dot - 1) - (uint8_t)(spr_counters[i]) <= 7) {
 			spr_pixel = (spr_patt_shift_lo[i] & 0x01) | ((spr_patt_shift_hi[i] & 0x01) << 1);
 			spr_patt_shift_lo[i] >>= 1;
 			spr_patt_shift_hi[i] >>= 1;
@@ -301,19 +300,28 @@ void create_pixel()
 				if (!(ppumask.show_bkg_left || ppumask.show_spr_left) && is_spr_zero_rendered) {
 					if (dot >= 9 && dot < 258) {
 						spr_zero_might_hit = false;
- 						ppustatus.spr_zero = 1;
+						ppustatus.spr_zero = 1;
 					}
-				} else if(is_spr_zero_rendered){
+				}
+				else if (is_spr_zero_rendered) {
 					if (dot >= 1 && dot < 258) {
 						spr_zero_might_hit = false;
 						ppustatus.spr_zero = 1;
 					}
 				}
-				
+
 			}
 			break;
-		} 
+		}
 	}
+
+	//delay sprite counters decrementation by 8 dots
+	//if (dot >= 8 && (ppumask.show_bkg_left || ppumask.show_spr_left)) {
+		/*for (uint8_t i = 0; i < 8; i++) {
+			if((int8_t)spr_counters[i] > 0)
+				spr_counters[i]--;
+		}*/
+	//}
 
 	spr_palette = secondary_oam[current_spr_index].attr.palette + 4;
 
@@ -365,7 +373,10 @@ void fetch_next_scl_sprites()
 
 	case 4:
 		temp = scanline - secondary_oam[secondary_oam_counter / 4].y_top;
-		if (scanline == 0xd0) {
+		if (scanline == 0xce) {
+			scanline = scanline;
+		}
+		if (scanline == 0xcf) {
 			scanline = scanline;
 		}
 		switch (temp) {
