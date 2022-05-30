@@ -127,19 +127,20 @@ uint8_t patt_tbl_hi;
 
 uint8_t current_attr_tbl_id;
 
+typedef union {
+	struct {
+		uint8_t palette : 2;
+		uint8_t UNUSED : 3;
+		uint8_t priority : 1;
+		uint8_t flip_horizon : 1;
+		uint8_t flip_vertical : 1;
+	};
+	uint8_t reg;
+} spr_attr;
 typedef struct {
 	uint8_t y_top;
 	uint8_t tile_index;
-	union {
-		struct {
-			uint8_t palette : 2;
-			uint8_t UNUSED : 3;
-			uint8_t priority : 1;
-			uint8_t flip_horizon : 1;
-			uint8_t flip_vertical : 1;
-		};
-		uint8_t reg;
-	} attr;
+	spr_attr attr;
 	uint8_t x_left;
 } sprite;
 //memory used for storing sprites
@@ -149,7 +150,7 @@ uint16_t primary_oam_counter; //referred to "n" in NESdev
 uint16_t secondary_oam_counter; 
 uint8_t oam_temp;
 //latches used when fetching data for foreground (sprite) rendering
-uint8_t spr_attrs[8];
+spr_attr spr_attrs[8];
 uint8_t spr_counters[8];
 //sprite shift registers
 uint8_t spr_patt_shift_lo[8];

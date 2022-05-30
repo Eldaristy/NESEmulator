@@ -157,7 +157,7 @@ void pre_render()
 	} else if (dot == 1) {
 		ppustatus.spr_overflow = 0;
 		ppustatus.spr_zero = 0;
-		spr_zero_might_hit = true;
+		spr_zero_might_hit = false;
 		for (uint8_t i = 0; i < 8; i++) {
 			spr_patt_shift_lo[i] = 0;
 			spr_patt_shift_hi[i] = 0;
@@ -249,7 +249,10 @@ void evaluate_sprites()
 		if ((diff >= 0 && diff <= 7 && !ppuctrl.spr_size)
 			| (diff >= 0 && diff <= 15 && ppuctrl.spr_size)) {
 			if (secondary_oam_counter < 32) {
-				
+				//check if we've detected sprite zero in next scanline
+				if (primary_oam_counter == 0) {
+					spr_zero_might_hit = true;
+				}
 				secondary_oam[secondary_oam_counter / 4] = primary_oam[primary_oam_counter / 4];
 				secondary_oam[secondary_oam_counter / 4].y_top++;
 				secondary_oam_counter += 4;
@@ -274,7 +277,7 @@ void create_pixel()
 	uint8_t color[3] = { 0 };
 
 	bkg_scroll_mask = 0x0001 << fine_x_scroll;
-	if (scanline == 0x1f) {
+	if (scanline == 0x18) {
 		scanline = scanline;
 	}
 	if (dot == 0x58) {
@@ -286,9 +289,8 @@ void create_pixel()
 	}
 
 	for (uint8_t i = 0; i < 8; i++) {
-		if (secondary_oam[i].y_top < 240
-			&& ((uint8_t)(dot - 1) - (uint8_t)(spr_counters[i]) >= 0)
-			&& (uint8_t)(dot - 1) - (uint8_t)(spr_counters[i]) <= 7) {
+		if (((dot - 1) - (spr_counters[i]) >= 0)
+			&& ((dot - 1) - (spr_counters[i]) <= 7)) {
 			spr_pixel = (spr_patt_shift_lo[i] & 0x01) | ((spr_patt_shift_hi[i] & 0x01) << 1);
 			spr_patt_shift_lo[i] >>= 1;
 			spr_patt_shift_hi[i] >>= 1;
@@ -309,21 +311,14 @@ void create_pixel()
 						ppustatus.spr_zero = 1;
 					}
 				}
-
 			}
-			break;
+			if (spr_pixel != 0) {
+				spr_palette = spr_attrs[i].palette + 4;
+				break;
+			}
+			
 		}
 	}
-
-	//delay sprite counters decrementation by 8 dots
-	//if (dot >= 8 && (ppumask.show_bkg_left || ppumask.show_spr_left)) {
-		/*for (uint8_t i = 0; i < 8; i++) {
-			if((int8_t)spr_counters[i] > 0)
-				spr_counters[i]--;
-		}*/
-	//}
-
-	spr_palette = secondary_oam[current_spr_index].attr.palette + 4;
 
 	if (bkg_pixel == 0 && spr_pixel == 0) {
 		final_pixel = bkg_pixel;
@@ -335,7 +330,7 @@ void create_pixel()
 		final_pixel = bkg_pixel;
 		final_palette = bkg_palette;
 	} else {
-		if (secondary_oam[current_spr_index].attr.priority) {
+		if (spr_attrs[current_spr_index].priority) {
 			final_pixel = bkg_pixel;
 			final_palette = bkg_palette;
 		} else {
@@ -472,6 +467,7 @@ void render()
 				vram_addr.nametable_x = temp_vram_addr.nametable_x;
 			}
 			for (uint8_t i = 0; i < 8; i++) {
+				spr_attrs[i] = secondary_oam[i].attr;
 				spr_counters[i] = secondary_oam[i].x_left;
 			}
 		}
