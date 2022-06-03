@@ -13,7 +13,7 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
-	parse_file("C:\\Users\\student\\Desktop\\super_mario.nes");
+	parse_file("C:\\Users\\user\\Desktop\\nestests\\kung_fu.nes");
 	//parse_file(argv[1]);
 	cpu_init();
 	reset();

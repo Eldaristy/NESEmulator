@@ -105,15 +105,19 @@ void ppu_init()
 
 void load_bkg_shifts()
 {
-	uint8_t mod_coarse_x = (vram_addr.coarse_x - 2) & 3; //same as "% 2", just wanted to use bit-wise
-	uint8_t mod_coarse_y = vram_addr.coarse_y & 3;
-
+	vram_addr.reg -= 2;
+	uint8_t mod_coarse_x = (uint8_t)(vram_addr.coarse_x) & 3; //same as "% 2", just wanted to use bit-wise
+	uint8_t mod_coarse_y = (uint8_t)(vram_addr.coarse_y) & 3;
+	vram_addr.reg += 2;
 	reverse_bits(&patt_tbl_lo);
 	reverse_bits(&patt_tbl_hi);
 
 	bkg_patt_shift_lo = (bkg_patt_shift_lo & 0xFF) | ((uint16_t)(patt_tbl_lo) << 8);
 	bkg_patt_shift_hi = (bkg_patt_shift_hi & 0xFF) | ((uint16_t)(patt_tbl_hi) << 8);
 
+	if (vram_addr.coarse_x == 0x03 && vram_addr.coarse_y == 28) {
+		patt_tbl_id = patt_tbl_id;
+	}
 	if (mod_coarse_y == 0 || mod_coarse_y == 1) { //top
 		if (mod_coarse_x == 0 || mod_coarse_x == 1) { //top-left
 			bkg_attr_shift_lo = attr_tbl_id & 0x01;
@@ -154,6 +158,10 @@ void pre_render()
 {
 	if (dot == 0) {
 		ppustatus.vblank = 0;
+		if (ppumask.show_bkg || ppumask.show_spr) {
+			vram_addr.coarse_x = temp_vram_addr.coarse_x;
+			vram_addr.nametable_x = temp_vram_addr.nametable_x;
+		}
 	} else if (dot == 1) {
 		ppustatus.spr_overflow = 0;
 		ppustatus.spr_zero = 0;
@@ -186,17 +194,26 @@ void fetch_next_scl_bkground()
 		//fetch pattern table byte
 		patt_tbl_id = ppu_bus_rd(NAMETABLES_START
 			| (vram_addr.reg & 0x0FFF));
+		if (patt_tbl_id == 0x1d) {
+			patt_tbl_id = patt_tbl_id;
+		}
 		break;
 
 	case 2:
 		//fetch attribute table byte
-
+		if (vram_addr.coarse_y == 0x04 && vram_addr.coarse_x == 0) {
+			scanline = scanline;
+		}
+		vram_addr.reg--;
 		attr_tbl_id = ppu_bus_rd(NAMETABLES_START
 			| (NAMETABLE_SIZE - 0x40)
 			| ((vram_addr.nametable_x | (vram_addr.nametable_y << 1)) << 11)
 			| ((vram_addr.coarse_y >> 2) << 3)
-			| ((vram_addr.coarse_x - 1) >> 2));
-
+			| ((vram_addr.coarse_x) >> 2));
+		vram_addr.reg++;
+		if (attr_tbl_id != 0) {
+			attr_tbl_id = attr_tbl_id;
+		}
 		break;
 
 	case 4:
@@ -233,33 +250,39 @@ void evaluate_sprites()
 	int16_t diff = 0;
 	primary_oam_counter = 0;
 	secondary_oam_counter = 0;
-	if (scanline == 0x17+7) {
+	if (scanline == 3) {
 		scanline = scanline;
 	}
 	for (uint8_t i = 0; i < 8; i++) {
 		memset(&(secondary_oam[i]), 0xFFFFFFFF, sizeof(uint8_t) * 4);
 	}
 
+
 	while (primary_oam_counter / 4 < 64 && secondary_oam_counter / 4 < 9) {
 		((uint8_t*)secondary_oam)[secondary_oam_counter] = ((uint8_t*)primary_oam)[primary_oam_counter];
-		diff = scanline + 1 - ((int16_t)(++(secondary_oam[secondary_oam_counter / 4].y_top)));
+		diff = scanline + 1 - ((int16_t)((secondary_oam[secondary_oam_counter / 4].y_top + 1)));
 		if (scanline == 0xcd) {
 			diff = diff;
 		}
 		if ((diff >= 0 && diff <= 7 && !ppuctrl.spr_size)
 			| (diff >= 0 && diff <= 15 && ppuctrl.spr_size)) {
-			if (secondary_oam_counter < 32) {
+			if (secondary_oam_counter / 4 < 8) {
 				//check if we've detected sprite zero in next scanline
 				if (primary_oam_counter == 0) {
 					spr_zero_might_hit = true;
 				}
 				secondary_oam[secondary_oam_counter / 4] = primary_oam[primary_oam_counter / 4];
-				secondary_oam[secondary_oam_counter / 4].y_top++;
+				if (secondary_oam[secondary_oam_counter / 4].y_top <= 0xff) {
+					secondary_oam[secondary_oam_counter / 4].y_top++;
+				}
+				
 				secondary_oam_counter += 4;
 				ppustatus.spr_overflow = 0;
 			} else {
 				ppustatus.spr_overflow = 1;
 			}
+		} else {
+			//((uint8_t*)secondary_oam)[secondary_oam_counter] = 0xFF;
 		}
 
 		primary_oam_counter += 4;
@@ -280,21 +303,26 @@ void create_pixel()
 	if (scanline == 0x18) {
 		scanline = scanline;
 	}
-	if (dot == 0x58) {
+	if (vram_addr.coarse_x == 0x0f && vram_addr.coarse_y == 0x17) {
+		dot = dot;
+	}
+	if (vram_addr.coarse_x == 0x08 && vram_addr.coarse_y == 0x00) {
 		dot = dot;
 	}
 	if (ppumask.show_bkg) {
 		bkg_pixel = ((bkg_patt_shift_lo & bkg_scroll_mask) > 0) | (((bkg_patt_shift_hi & bkg_scroll_mask) > 0) << 1);
 		bkg_palette = (bkg_attr_shift_lo & 0x01) | ((bkg_attr_shift_hi & 0x01) << 1); 
 	}
-
-	for (uint8_t i = 0; i < 8; i++) {
+	uint8_t i = 0;
+	for (i = 0; i < 8; i++) {
 		if (((dot - 1) - (spr_counters[i]) >= 0)
 			&& ((dot - 1) - (spr_counters[i]) <= 7)) {
-			spr_pixel = (spr_patt_shift_lo[i] & 0x01) | ((spr_patt_shift_hi[i] & 0x01) << 1);
-			spr_patt_shift_lo[i] >>= 1;
-			spr_patt_shift_hi[i] >>= 1;
-
+			if ((spr_counters[i] <= 7 && ppumask.show_spr_left)
+				|| (spr_counters[i] >= 8 && ppumask.show_spr)) {
+				spr_pixel = (spr_patt_shift_lo[i] & 0x01) | ((spr_patt_shift_hi[i] & 0x01) << 1);
+				spr_patt_shift_lo[i] >>= 1;
+				spr_patt_shift_hi[i] >>= 1;
+			}
 			if (i == 0 && spr_zero_might_hit
 				&& spr_pixel != 0 && bkg_pixel != 0
 				&& ppumask.show_bkg && ppumask.show_spr) {
@@ -330,7 +358,7 @@ void create_pixel()
 		final_pixel = bkg_pixel;
 		final_palette = bkg_palette;
 	} else {
-		if (spr_attrs[current_spr_index].priority) {
+		if (spr_attrs[i].priority) {
 			final_pixel = bkg_pixel;
 			final_palette = bkg_palette;
 		} else {
@@ -354,8 +382,8 @@ void create_pixel()
 }
 void fetch_next_scl_sprites()
 {
-	uint8_t temp = 0;
 	//here the structure is very similar to the one of fetch_next_scl_bkground(), but even simpler
+	int32_t t = *((int32_t*)(secondary_oam + 7));
 	switch ((dot - 1) & 0x07) {
 	case 0:
 		is_spr_zero_rendered = false;
@@ -367,39 +395,7 @@ void fetch_next_scl_sprites()
 		break;
 
 	case 4:
-		temp = scanline - secondary_oam[secondary_oam_counter / 4].y_top;
-		if (scanline == 0xce) {
-			scanline = scanline;
-		}
-		if (scanline == 0xcf) {
-			scanline = scanline;
-		}
-		switch (temp) {
-		case 1:
-			temp = temp;
-			break;
-		case 2:
-			temp = temp;
-			break;
-		case 3:
-			temp = temp;
-			break;
-		case 4:
-			temp = temp;
-			break;
-		case 5:
-			temp = temp;
-			break;
-		case 6:
-			temp = temp;
-			break;
-		case 7:
-			temp = temp;
-			break;
-		case 8:
-			temp = temp;
-			break;
-		} 
+		
 
 		spr_patt_shift_lo[secondary_oam_counter / 4] = ppu_bus_rd((ppuctrl.spr_pattern_table << 12)
 			| (secondary_oam[secondary_oam_counter / 4].tile_index << 4)
@@ -407,7 +403,10 @@ void fetch_next_scl_sprites()
 		if (!(secondary_oam[secondary_oam_counter / 4].attr.reg & 0x40)) {
 			reverse_bits(&(spr_patt_shift_lo[secondary_oam_counter / 4]));
 		}
-		
+		/*if (t >= 0xFFFFFFFF
+			&& secondary_oam[secondary_oam_counter / 4].tile_index == 0xFF) {
+			spr_patt_shift_lo[secondary_oam_counter / 4] = 0;
+		}*/
 		break;
 
 	case 6:
@@ -417,7 +416,11 @@ void fetch_next_scl_sprites()
 		if (!(secondary_oam[secondary_oam_counter / 4].attr.reg & 0x40)) {
 			reverse_bits(&(spr_patt_shift_hi[secondary_oam_counter / 4]));
 		}
-
+		/*if (t == 0xFFFFFFFF
+			&& secondary_oam[secondary_oam_counter / 4].tile_index == 0xFF) {
+			spr_patt_shift_hi[secondary_oam_counter / 4] = 0;
+		}*/
+	
 		secondary_oam_counter += 4;
 		break;
 	}
@@ -475,9 +478,6 @@ void render()
 		fetch_next_scl_sprites();
 		
 	} else if (dot <= 336) {
-		if (dot == 336) {
-			
-		}
 		//fetch data for first 2 tiles in next scanline
 		fetch_next_scl_bkground();
 		if (ppumask.show_bkg) {
